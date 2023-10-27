@@ -4,8 +4,14 @@ carrier:
     reference: envisat
     match: ers2
 
-#Define match type [xo/otm] between crossovers and orbit trajectory matches
-matchtype: OTM
+#Define matchching parameters for
+#- type between crossovers and orbit trajectory matches [xo/otm]
+#- buffer size [in meters; int], and,
+#- time difference [dt in hours; int]
+matching:
+    type: OTM
+    buffer: 5000
+    dt: 1
 
 #Specify AOI [arc/ant] for Arctic or Antarctic use
 aoi: arc
