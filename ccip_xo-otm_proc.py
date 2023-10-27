@@ -8,6 +8,7 @@
 # In[]
 
 from xo-otm-identify import CommandLineArgParser
+from xo-otm-identify import PreProcessor
 
 
 
