@@ -9,3 +9,6 @@
 
 
 
+# In[]
+if __name__ == "__main__":
+    xo_wrapper()   
