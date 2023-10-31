@@ -49,5 +49,8 @@ class CommandLineArgParser(object):
     def parse_command_line_arguments(self) -> None:
         self.args = self.parser.parse_args()
         
+    def set_test_cfg_arg(self, cfg: str) -> None:
+        self.args = self.parser.parse_args(["--config-file", cfg])
+        
     def get_args(self) -> dict:
         return self.args.__dict__
