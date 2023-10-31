@@ -33,19 +33,19 @@ class PreProcessor:
         
     def run(self) -> None:
         #compile geodata
-        self.carrier1 = self._compile(self.path_carrier1, 
-                                      self.files_carrier1)
-        self.carrier2 = self._compile(self.path_carrier2, 
-                                      self.files_carrier2)
+        carrier1_gdfdict = self._compile(self.path_carrier1, 
+                                         self.files_carrier1)
+        carrier2_gdfdict = self._compile(self.path_carrier2, 
+                                         self.files_carrier2)
         #identify xo's/otm's
-        
+        id_gdf = self.identify(carrier1_gdfdict, carrier2_gdfdict)
         
         #export to shapefiles
         
             
     def _compile(self, 
-             paths: List[str],
-             files: List[str]) -> Dict[str, gpd.GeoDataFrame]:
+                 paths: List[str],
+                 files: List[str]) -> Dict[str, gpd.GeoDataFrame]:
         #number of files
         N_FILES = len(files)
     
@@ -134,182 +134,179 @@ class PreProcessor:
         #assign preproc gdf
         return xo_gdf_dict#
     
-    # def _identify_intersection(self, line1, line2):
-    #     if self.matchtype == 'xo':
-    #         return lin1.intersection(lin2)
-    #     if self.matchtype == 'otm':
-    #         return lin1.intersection(lin2.buffer(self.buffer))
-    #     if self.matchtype != 'xo' and self.matchtype != 'otm':
-    #         return None
+    def _identify_intersection(self, line1, line2):
+        if self.matchtype == 'xo':
+            return lin1.intersection(lin2)
+        if self.matchtype == 'otm':
+            return lin1.intersection(lin2.buffer(self.buffer))
         
-    def _identify_XOs(self, line1, line2):
-        pass
+    def _identify_XOs(self, match, line1, line2):
+        #point subset by file id
+        pts1_sub = pts1[pts1['id']==xo_id1]
+        pts2_sub = pts2[pts2['id']==xo_id2]
+        pts1_sub_geo = gpd.GeoSeries(pts1_sub.geometry)
+        pts2_sub_geo = gpd.GeoSeries(pts2_sub.geometry)
+        
+        #buffer intersect
+        xo_buff = xo.buffer(self.buffer)
+        
+        #retrieve indices of points
+        pts1_xo_idx = []
+        for pt1_idx, pt1 in enumerate(pts1_sub_geo):
+            point_intersects = pt1.intersects(xo_buff)
+            if point_intersects:
+                pts1_xo_idx.append(pt1_idx)
+        pts2_xo_idx = []
+        for pt2_idx, pt2 in enumerate(pts2_sub_geo):
+            point_intersects = pt2.intersects(xo_buff)
+            if point_intersects:
+                pts2_xo_idx.append(pt2_idx)
+                
+        #check whether points exist in buffer
+        if len(pts1_xo_idx)>0 and len(pts2_xo_idx)>0:
+            #check time difference
+            dt_idx1 = int(len(pts1_xo_idx)/2)
+            dt_idx2 = int(len(pts2_xo_idx)/2)
+            t1 = pts1_sub['time'].iloc[pts1_xo_idx[dt_idx1]]
+            t2 = pts2_sub['time'].iloc[pts2_xo_idx[dt_idx2]]
+            
+            #get correct indices in files
+            fidx1 = pts1_sub['fidx'].iloc[pts1_xo_idx]
+            fidx2 = pts2_sub['fidx'].iloc[pts2_xo_idx]
+            
+            #convert to datetime obj
+            dt_pts1 = dt.datetime.fromtimestamp(t1,dt.timezone.utc)
+            dt_pts2 = dt.datetime.fromtimestamp(t2,dt.timezone.utc)
+            
+            #calculate average time difference [in hours]
+            delta_dt_xo = dt_pts1-dt_pts2
+            abs_delta_hh = abs(delta_dt_xo.total_seconds()/(3600))
+            #store attributes/geometry to attributes and 
+            #geometry list
+            #[idx_files1_list, idx_files2_list,
+            # rng1_start, rng1_end, 
+            # rng2_start, rng2_end, dt]
+            attr.append((xo_id1,xo_id2,
+                         fidx1.iloc[0],
+                         fidx1.iloc[-1],
+                         fidx2.iloc[0],
+                         fidx2.iloc[-1],
+                         np.round(abs_delta_hh,3)))
+            geom.append(xo)
     
-    def identify_OTMs(self, line1, line2):
-        pass
+    def identify_OTMs(self, match, line1, line2):
+        #point subset by file id
+        pts1_sub = pts1[pts1['id']==xo_id1]
+        pts2_sub = pts2[pts2['id']==xo_id2]
+        pts1_sub_geo = gpd.GeoSeries(pts1_sub.geometry)
+        pts2_sub_geo = gpd.GeoSeries(pts2_sub.geometry)
+        
+        #buffer intersect
+        xo_buff = xo.buffer(5000)
+        
+        #retrieve indices of points
+        pts1_xo_idx = []
+        for pt1_idx, pt1 in enumerate(pts1_sub_geo):
+            point_intersects = xo_buff.contains(pt1)
+            if point_intersects:
+                pts1_xo_idx.append(pt1_idx)
+        pts2_xo_idx = []
+        for pt2_idx, pt2 in enumerate(pts2_sub_geo):
+            point_intersects = xo_buff.contains(pt2)
+            if point_intersects:
+                pts2_xo_idx.append(pt2_idx)
     
-    def _identify(self):
+        #check whether points exist in buffer
+        if len(pts1_xo_idx)>50 and len(pts2_xo_idx)>50:
+            #get correct indices in files
+            fidx1 = pts1_sub['fidx'].iloc[pts1_xo_idx]
+            fidx2 = pts2_sub['fidx'].iloc[pts2_xo_idx]
+            
+            #check and calculate time difference [in hours]
+            t1 = pts1_sub['time'].iloc[pts1_xo_idx[0]]
+            t2 = pts2_sub['time'].iloc[pts2_xo_idx[0]]
+            dt_pts1 = dt.datetime.fromtimestamp(t1,dt.timezone.utc)
+            dt_pts2 = dt.datetime.fromtimestamp(t2,dt.timezone.utc)
+            delta_dt_xo = dt_pts1-dt_pts2
+            abs_delta_hh = abs(delta_dt_xo.total_seconds()/(3600))
+        
+            #store attributes/geometry to attributes and 
+            #geometry list
+            #[idx_files1_list, idx_files2_list,
+            # rng1_start, rng1_end, 
+            # rng2_start, rng2_end, dt]
+            attr.append((xo_id1,xo_id2,
+                         fidx1.iloc[0],
+                         fidx1.iloc[-1],
+                         fidx2.iloc[0],
+                         fidx2.iloc[-1],
+                         np.round(abs_delta_hh,3)))
+            geom.append(xo)
+    
+    def _identify(self, 
+                  gdfdict_c1: Dict[str, gpd.GeoDataFrame], 
+                  gdfdict_c2: Dict[str, gpd.GeoDataFrame]) -> gpd.GeoDataFrame:
         #allocate sum-up
         attr = []
         geom = []
         
         #load point data from sensor 1/2
-        pts1 = self.carrier1['pts']
-        pts2 = self.carrier2['pts']
+        POINTS1 = gdfdict_c1['pts']
+        POINTS2 = gdfdict_c2['pts']
         
         #load line data from sensor 1/2
-        lns1 = self.carrier1['lin']
-        lns2 = self.carrier2['lin']
+        LINES1 = gdfdict_c1['lin']
+        LINES2 = gdfdict_c2['lin']
         
         #convert to datetime to speed up the id process
-        avg_t1 = pts1[['id','time']].groupby(['id'], as_index=False).mean()
+        avg_t1 = POINTS1[['id','time']].groupby(['id'], as_index=False).mean()
         dt1_df = pd.to_datetime(avg_t1.time,unit='s')
-        avg_t2 = pts2[['id','time']].groupby(['id'], as_index=False).mean()
+        avg_t2 = POINTS2[['id','time']].groupby(['id'], as_index=False).mean()
         dt2_df = pd.to_datetime(avg_t2.time,unit='s')
         
         #loop over all sensor 1 orbits to identify crossovers and 
         #orbit-trajectory matches with sensor 2 orbits
         N_LINES_CARRIER1 = len(lns1)
-        for idx1, xo_id1, lin1 in lns1.itertuples():
+        for idx1, xo_id1, lin1 in LINES1.itertuples():
             #status
             logger.info(f'Processing {idx1+1} out of {N_LINES_CARRIER1}')
             logger.info(f'Identifying orbit intersections...')
 
             #create time-dependent subset of sensor2 orbits to save time
-            delta_dt_df = dt1_df.iloc[idx1]-dt2_df
-            #calculate absolute date time difference [in hours]
-            abs_dtd_hh = (dt2_df-dt1_df.iloc[idx1]).abs()/pd.Timedelta(hours=1)
-            #indices to use in subset
-            lns_idx = abs_dtd_hh[abs_dtd_hh <= self.delta_t].index
+            #by calculating absolute date time difference [in hours]
+            abs_dtd_hh = (dt2_df - dt1_df.iloc[idx1]).abs()
+            abs_dtd_hh = abs_dtd_hh / pd.Timedelta(hours=1)
+            #subset indices to use by specified maximum time difference
+            LINES_IDX = abs_dtd_hh[abs_dtd_hh <= self.delta_t].index
 
             #loop over the sensor2 orbit subset and collect information
-            for idx2, xo_id2, lin2 in lns2.iloc[lns_idx,:].itertuples():
+            for idx2, xo_id2, lin2 in LINES2.iloc[LINES_IDX,:].itertuples():
                 #summarize data
                 if lin1 is None or lin2 is None:
                     continue
-                else:
-                    #find intersection
-                    if self.matchtype == 'xo':
-                        xo = lin1.intersection(lin2)
-                    else:
-                        xo = lin1.intersection(lin2.buffer(5000))
+
+                #find intersection
+                MATCH = self._identify_intersection(lin1, lin2)
+                #identify XOs and only use point-like intersects 
+                #(no close "fly-by's")
+                if type(MATCH) is shapely.geometry.point.Point:
+                    self.identify_XOs()                        
+                #identify OTMs
+                if type(MATCH) is shapely.geometry.linestring.LineString:
+                    self.identify_OTMs()
                     
-                    #only use point-like intersects (no close "fly-by's")
-                    if type(xo) is shapely.geometry.point.Point:
-                        #point subset by file id
-                        pts1_sub = pts1[pts1['id']==xo_id1]
-                        pts2_sub = pts2[pts2['id']==xo_id2]
-                        pts1_sub_geo = gpd.GeoSeries(pts1_sub.geometry)
-                        pts2_sub_geo = gpd.GeoSeries(pts2_sub.geometry)
-                        
-                        #buffer intersect
-                        xo_buff = xo.buffer(self.buffer)
-                        
-                        #retrieve indices of points
-                        pts1_xo_idx = []
-                        for pt1_idx, pt1 in enumerate(pts1_sub_geo):
-                            point_intersects = pt1.intersects(xo_buff)
-                            if point_intersects:
-                                pts1_xo_idx.append(pt1_idx)
-                        pts2_xo_idx = []
-                        for pt2_idx, pt2 in enumerate(pts2_sub_geo):
-                            point_intersects = pt2.intersects(xo_buff)
-                            if point_intersects:
-                                pts2_xo_idx.append(pt2_idx)
-                                
-                        #check whether points exist in buffer
-                        if len(pts1_xo_idx)>0 and len(pts2_xo_idx)>0:
-                            #check time difference
-                            dt_idx1 = int(len(pts1_xo_idx)/2)
-                            dt_idx2 = int(len(pts2_xo_idx)/2)
-                            t1 = pts1_sub['time'].iloc[pts1_xo_idx[dt_idx1]]
-                            t2 = pts2_sub['time'].iloc[pts2_xo_idx[dt_idx2]]
-                            
-                            #get correct indices in files
-                            fidx1 = pts1_sub['fidx'].iloc[pts1_xo_idx]
-                            fidx2 = pts2_sub['fidx'].iloc[pts2_xo_idx]
-                            
-                            #convert to datetime obj
-                            dt_pts1 = dt.datetime.fromtimestamp(t1,dt.timezone.utc)
-                            dt_pts2 = dt.datetime.fromtimestamp(t2,dt.timezone.utc)
-                            
-                            #calculate average time difference [in hours]
-                            delta_dt_xo = dt_pts1-dt_pts2
-                            abs_delta_hh = abs(delta_dt_xo.total_seconds()/(3600))
-                            #store attributes/geometry to attributes and 
-                            #geometry list
-                            #[idx_files1_list, idx_files2_list,
-                            # rng1_start, rng1_end, 
-                            # rng2_start, rng2_end, dt]
-                            attr.append((xo_id1,xo_id2,
-                                         fidx1.iloc[0],
-                                         fidx1.iloc[-1],
-                                         fidx2.iloc[0],
-                                         fidx2.iloc[-1],
-                                         np.round(abs_delta_hh,3)))
-                            geom.append(xo)
-                    
-                    #line features
-                    if type(xo) is shapely.geometry.linestring.LineString:
-                        #point subset by file id
-                        pts1_sub = pts1[pts1['id']==xo_id1]
-                        pts2_sub = pts2[pts2['id']==xo_id2]
-                        pts1_sub_geo = gpd.GeoSeries(pts1_sub.geometry)
-                        pts2_sub_geo = gpd.GeoSeries(pts2_sub.geometry)
-                        
-                        #buffer intersect
-                        xo_buff = xo.buffer(5000)
-                        
-                        #retrieve indices of points
-                        pts1_xo_idx = []
-                        for pt1_idx, pt1 in enumerate(pts1_sub_geo):
-                            point_intersects = xo_buff.contains(pt1)
-                            if point_intersects:
-                                pts1_xo_idx.append(pt1_idx)
-                        pts2_xo_idx = []
-                        for pt2_idx, pt2 in enumerate(pts2_sub_geo):
-                            point_intersects = xo_buff.contains(pt2)
-                            if point_intersects:
-                                pts2_xo_idx.append(pt2_idx)
-                    
-                        #check whether points exist in buffer
-                        if len(pts1_xo_idx)>50 and len(pts2_xo_idx)>50:
-                            #get correct indices in files
-                            fidx1 = pts1_sub['fidx'].iloc[pts1_xo_idx]
-                            fidx2 = pts2_sub['fidx'].iloc[pts2_xo_idx]
-                            
-                            #check and calculate time difference [in hours]
-                            t1 = pts1_sub['time'].iloc[pts1_xo_idx[0]]
-                            t2 = pts2_sub['time'].iloc[pts2_xo_idx[0]]
-                            dt_pts1 = dt.datetime.fromtimestamp(t1,dt.timezone.utc)
-                            dt_pts2 = dt.datetime.fromtimestamp(t2,dt.timezone.utc)
-                            delta_dt_xo = dt_pts1-dt_pts2
-                            abs_delta_hh = abs(delta_dt_xo.total_seconds()/(3600))
-                        
-                            #store attributes/geometry to attributes and 
-                            #geometry list
-                            #[idx_files1_list, idx_files2_list,
-                            # rng1_start, rng1_end, 
-                            # rng2_start, rng2_end, dt]
-                            attr.append((xo_id1,xo_id2,
-                                         fidx1.iloc[0],
-                                         fidx1.iloc[-1],
-                                         fidx2.iloc[0],
-                                         fidx2.iloc[-1],
-                                         np.round(abs_delta_hh,3)))
-                            geom.append(xo)
-                    else:
-                        #others stay unused
-                        pass
         #store data into a GeoDataFrame
         print('['+str(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+\
               '] - Saving results...')
         self.out = gpd.GeoDataFrame(attr,
                                    geometry=geom,
                                    crs="EPSG:"+str(self.epsg),
-                                   columns=[self.matchtype+'_f1',self.matchtype+'_f2',\
-                                            'f1_rng_0','f1_rng_1',\
-                                            'f2_rng_0','f2_rng_1',\
+                                   columns=[self.matchtype+'_f1',
+                                            self.matchtype+'_f2',
+                                            'f1_rng_0',
+                                            'f1_rng_1',
+                                            'f2_rng_0',
+                                            'f2_rng_1',
                                             'dt_'+self.matchtype])
         #return output
         print('['+str(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+\
