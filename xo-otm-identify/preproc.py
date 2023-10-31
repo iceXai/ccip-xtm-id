@@ -16,6 +16,8 @@ import numpy as np
 from typing import List, Dict
 from loguru import logger
 
+from cfg import Configuration
+
 
 
 # In[]
@@ -25,7 +27,7 @@ class PreProcessor:
     Class to handle the preprocessing of the given sensor/carrier combo, i.e.,
     the compilation of lat/lon and file indices from all available L1p files
     """
-    def __init__(self, path_to_carrier1: str, path_to_carrier2: str):
+    def __init__(self, cfg: Configuration):
         self.path_carrier1 = path_to_carrier1
         self.path_carrier2 = path_to_carrier2
         self.files_carrier1 = os.listdir(self.path_carrier1)
@@ -41,7 +43,10 @@ class PreProcessor:
         id_gdf = self.identify(carrier1_gdfdict, carrier2_gdfdict)
         
         #export to shapefiles
+        self._export(id_gdf)
         
+        #import already existing hsape files
+        self._import()
             
     def _compile(self, 
                  paths: List[str],
@@ -322,6 +327,49 @@ class PreProcessor:
                                 columns = COLUMNS)
         logger.info(f'Process complete!')    
     
-    def _export(self):
-        pass
+    def _export(self, id_gdf: gpd.GeoDataFrame) -> None:
+        
+        
+        
+        
+        #set-up output base name
+        if self.matchtype == 'otm':
+            self.out2shp = os.path.join(self.outpath,
+                                    '_'.join([self.matchtype,self.c1,self.c2,
+                                              self.year,self.month,
+                                              self.aoi]))
+            self.out2csv = os.path.join(self.outpath,
+                                        '_'.join([self.matchtype,self.year,self.month,
+                                                  self.aoi]))
+        else:
+            buff_tag = str(self.buffer).zfill(5)+'m'
+            self.out2shp = os.path.join(self.outpath,
+                                        '_'.join([self.matchtype,self.c1,self.c2,
+                                                  self.year,self.month,
+                                                  self.aoi,buff_tag]))
+            self.out2csv = os.path.join(self.outpath,
+                                        '_'.join([self.matchtype,self.year,self.month,
+                                                  self.aoi,buff_tag]))
+            
+        #save identified crossovers to shp file
+        def data2shp(self) -> None:
+            #make sure crs is set
+            self.out = self.out.set_crs(epsg=self.epsg)
+            #save
+            self.out.to_file(''.join([self.out2shp,'.shp']))
+            
+        #load identified crossovers from shp file
+        def shp2data(self) -> None:
+            if os.path.isfile(self.out2shp+'.shp'):
+                self.out = gpd.read_file(self.out2shp+'.shp')
+            else:
+                print('['+str(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+\
+                      '] ! No corresponding .shp file found')
+                sys.exit()
+                
+                
+    def _import(self):
+        
+            
+            
     
