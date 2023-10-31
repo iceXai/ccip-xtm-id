@@ -6,5 +6,6 @@
 
 # In[] 
 
-from .preproc import CarrierPreProcessor
+from .preproc import PreProcessor
 from .clap import CommandLineArgParser
+from .cfg import Configuration
