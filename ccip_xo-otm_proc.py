@@ -9,6 +9,7 @@
 
 from xo-otm-identify import CommandLineArgParser
 from xo-otm-identify import PreProcessor
+from xo-otm-identify import Configuration
 
 
 
