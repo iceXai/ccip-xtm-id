@@ -16,7 +16,7 @@ import numpy as np
 from typing import List, Dict
 from loguru import logger
 
-from cfg import Configuration
+from .cfg import Configuration
 
 
 
