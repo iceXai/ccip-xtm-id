@@ -44,13 +44,11 @@ class PreProcessor:
         
         #export to shapefiles
         self._export(id_gdf)
-        
-        #import already existing hsape files
-        self._import()
             
     def _compile(self, 
                  paths: List[str],
                  files: List[str]) -> Dict[str, gpd.GeoDataFrame]:
+        """ Compile suitable data from 'ocean' files with geoinformation """
         #number of files
         N_FILES = len(files)
     
@@ -138,6 +136,89 @@ class PreProcessor:
         logger.info(f'Complete!')
         #assign preproc gdf
         return xo_gdf_dict#
+
+    def _identify(self, 
+                  gdfdict_c1: Dict[str, gpd.GeoDataFrame], 
+                  gdfdict_c2: Dict[str, gpd.GeoDataFrame]) -> gpd.GeoDataFrame:
+        """ Identify XOs/OTMs from compiled GeoDataFrames """
+        #allocate sum-up
+        attributes = []
+        geometries = []
+        
+        #load point data from sensor 1/2
+        POINTS1 = gdfdict_c1['pts']
+        POINTS2 = gdfdict_c2['pts']
+        
+        #load line data from sensor 1/2
+        LINES1 = gdfdict_c1['lin']
+        LINES2 = gdfdict_c2['lin']
+        
+        #convert to datetime to speed up the id process
+        avg_t1 = POINTS1[['id','time']].groupby(['id'], as_index=False).mean()
+        dt1_df = pd.to_datetime(avg_t1.time,unit='s')
+        avg_t2 = POINTS2[['id','time']].groupby(['id'], as_index=False).mean()
+        dt2_df = pd.to_datetime(avg_t2.time,unit='s')
+        
+        #loop over all sensor 1 orbits to identify crossovers and 
+        #orbit-trajectory matches with sensor 2 orbits
+        N_LINES_CARRIER1 = len(lns1)
+        for idx1, xo_id1, lin1 in LINES1.itertuples():
+            #status
+            logger.info(f'Processing {idx1+1} out of {N_LINES_CARRIER1}')
+            logger.info(f'Identifying orbit intersections...')
+
+            #create time-dependent subset of sensor2 orbits to save time
+            #by calculating absolute date time difference [in hours]
+            abs_dtd_hh = (dt2_df - dt1_df.iloc[idx1]).abs()
+            abs_dtd_hh = abs_dtd_hh / pd.Timedelta(hours=1)
+            #subset indices to use by specified maximum time difference
+            LINES_IDX = abs_dtd_hh[abs_dtd_hh <= self.delta_t].index
+
+            #loop over the sensor2 orbit subset and collect information
+            for idx2, xo_id2, lin2 in LINES2.iloc[LINES_IDX,:].itertuples():
+                #summarize data
+                if lin1 is None or lin2 is None:
+                    continue
+
+                #find intersection
+                MATCH = self._identify_intersection(lin1, lin2)
+                #get matching points
+                points_on_line1 = POINTS1[POINTS1['id']==xo_id1]
+                points_on_line2 = POINTS2[POINTS2['id']==xo_id2]
+                #identify XOs and only use point-like intersects 
+                #(no close "fly-by's")
+                if type(MATCH) is shapely.geometry.point.Point:
+                    ATTRS = self._identify_XOs(MATCH, 
+                                                points_on_line1, 
+                                                points_on_line2)                           
+                #identify OTMs
+                elif type(MATCH) is shapely.geometry.linestring.LineString:
+                    ATTRS = self._identify_OTMs(MATCH, 
+                                                points_on_line1, 
+                                                points_on_line2)
+                else:
+                    logger.critical(f'Unsupported intersect type: '+\
+                                    f'{type(MATCH)}!')
+                    sys.exit()
+                if ATTRS is not None:
+                    attributes.append(ATTRS)
+                    geometries.append(MATCH)
+                    
+        #store data into a GeoDataFrame
+        logger.info(f'Saving results to GeoDataFrame...')
+        COLUMNS = [self.matchtype+'_f1',
+                   self.matchtype+'_f2',
+                   'f1_rng_0',
+                   'f1_rng_1',
+                   'f2_rng_0',
+                   'f2_rng_1',
+                   'dt_'+self.matchtype,
+                   ]
+        return gpd.GeoDataFrame(attributes,
+                                geometry = geometries,
+                                crs = "EPSG:"+str(self.epsg),
+                                columns = COLUMNS)
+        logger.info(f'Process complete!')    
     
     def _identify_intersection(self, line1, line2) -> None:
         if self.matchtype == 'xo':
@@ -244,132 +325,14 @@ class PreProcessor:
             return ATTRS
         else: 
             return None
-    
-    def _identify(self, 
-                  gdfdict_c1: Dict[str, gpd.GeoDataFrame], 
-                  gdfdict_c2: Dict[str, gpd.GeoDataFrame]) -> gpd.GeoDataFrame:
-        #allocate sum-up
-        attributes = []
-        geometries = []
         
-        #load point data from sensor 1/2
-        POINTS1 = gdfdict_c1['pts']
-        POINTS2 = gdfdict_c2['pts']
-        
-        #load line data from sensor 1/2
-        LINES1 = gdfdict_c1['lin']
-        LINES2 = gdfdict_c2['lin']
-        
-        #convert to datetime to speed up the id process
-        avg_t1 = POINTS1[['id','time']].groupby(['id'], as_index=False).mean()
-        dt1_df = pd.to_datetime(avg_t1.time,unit='s')
-        avg_t2 = POINTS2[['id','time']].groupby(['id'], as_index=False).mean()
-        dt2_df = pd.to_datetime(avg_t2.time,unit='s')
-        
-        #loop over all sensor 1 orbits to identify crossovers and 
-        #orbit-trajectory matches with sensor 2 orbits
-        N_LINES_CARRIER1 = len(lns1)
-        for idx1, xo_id1, lin1 in LINES1.itertuples():
-            #status
-            logger.info(f'Processing {idx1+1} out of {N_LINES_CARRIER1}')
-            logger.info(f'Identifying orbit intersections...')
+    def _export(self, id_gdf: gpd.GeoDataFrame) -> None:           
+        """ Save identified XOs/OTMs to .shp file """
+        #make sure crs is set
+        id_gdf = id_gdf.set_crs(epsg=self.epsg)
+        #save
+        id_gdf.to_file(f'SHAPEFILENAMES FROM CFG')
 
-            #create time-dependent subset of sensor2 orbits to save time
-            #by calculating absolute date time difference [in hours]
-            abs_dtd_hh = (dt2_df - dt1_df.iloc[idx1]).abs()
-            abs_dtd_hh = abs_dtd_hh / pd.Timedelta(hours=1)
-            #subset indices to use by specified maximum time difference
-            LINES_IDX = abs_dtd_hh[abs_dtd_hh <= self.delta_t].index
 
-            #loop over the sensor2 orbit subset and collect information
-            for idx2, xo_id2, lin2 in LINES2.iloc[LINES_IDX,:].itertuples():
-                #summarize data
-                if lin1 is None or lin2 is None:
-                    continue
-
-                #find intersection
-                MATCH = self._identify_intersection(lin1, lin2)
-                #get matching points
-                points_on_line1 = POINTS1[POINTS1['id']==xo_id1]
-                points_on_line2 = POINTS2[POINTS2['id']==xo_id2]
-                #identify XOs and only use point-like intersects 
-                #(no close "fly-by's")
-                if type(MATCH) is shapely.geometry.point.Point:
-                    ATTRS = self._identify_XOs(MATCH, 
-                                                points_on_line1, 
-                                                points_on_line2)                           
-                #identify OTMs
-                elif type(MATCH) is shapely.geometry.linestring.LineString:
-                    ATTRS = self._identify_OTMs(MATCH, 
-                                                points_on_line1, 
-                                                points_on_line2)
-                else:
-                    logger.critical(f'Unsupported intersect type: '+\
-                                    f'{type(MATCH)}!')
-                    sys.exit()
-                if ATTRS is not None:
-                    attributes.append(ATTRS)
-                    geometries.append(MATCH)
-                    
-        #store data into a GeoDataFrame
-        logger.info(f'Saving results to GeoDataFrame...')
-        COLUMNS = [self.matchtype+'_f1',
-                   self.matchtype+'_f2',
-                   'f1_rng_0',
-                   'f1_rng_1',
-                   'f2_rng_0',
-                   'f2_rng_1',
-                   'dt_'+self.matchtype,
-                   ]
-        return gpd.GeoDataFrame(attributes,
-                                geometry = geometries,
-                                crs = "EPSG:"+str(self.epsg),
-                                columns = COLUMNS)
-        logger.info(f'Process complete!')    
-    
-    def _export(self, id_gdf: gpd.GeoDataFrame) -> None:
-        
-        
-        
-        
-        #set-up output base name
-        if self.matchtype == 'otm':
-            self.out2shp = os.path.join(self.outpath,
-                                    '_'.join([self.matchtype,self.c1,self.c2,
-                                              self.year,self.month,
-                                              self.aoi]))
-            self.out2csv = os.path.join(self.outpath,
-                                        '_'.join([self.matchtype,self.year,self.month,
-                                                  self.aoi]))
-        else:
-            buff_tag = str(self.buffer).zfill(5)+'m'
-            self.out2shp = os.path.join(self.outpath,
-                                        '_'.join([self.matchtype,self.c1,self.c2,
-                                                  self.year,self.month,
-                                                  self.aoi,buff_tag]))
-            self.out2csv = os.path.join(self.outpath,
-                                        '_'.join([self.matchtype,self.year,self.month,
-                                                  self.aoi,buff_tag]))
-            
-        #save identified crossovers to shp file
-        def data2shp(self) -> None:
-            #make sure crs is set
-            self.out = self.out.set_crs(epsg=self.epsg)
-            #save
-            self.out.to_file(''.join([self.out2shp,'.shp']))
-            
-        #load identified crossovers from shp file
-        def shp2data(self) -> None:
-            if os.path.isfile(self.out2shp+'.shp'):
-                self.out = gpd.read_file(self.out2shp+'.shp')
-            else:
-                print('['+str(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+\
-                      '] ! No corresponding .shp file found')
-                sys.exit()
-                
-                
-    def _import(self):
-        
-            
             
     
