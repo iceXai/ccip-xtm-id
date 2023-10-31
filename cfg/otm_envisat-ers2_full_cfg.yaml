@@ -25,7 +25,7 @@ input:
 version:
     reference:
         l1p: v1p2
-        l2i v3p0-rc2
+        l2i: v3p0-rc2
     match:
         l1p: v1p3
         l2i: v3p0-preview5-mt-v1p3-v10
@@ -38,8 +38,8 @@ override: False
     
 #Specify dates to be calculated by year/month as single int ot list
 date:
-    year: [10, 11, 12, 01, 02, 03, 04]
-    month: [2002, 2002, 2002, 2003, 2003, 2003, 2003]
+    month: [10, 11, 12, 01, 02, 03, 04]
+    year: [2002, 2002, 2002, 2003, 2003, 2003, 2003]
     
 #Set parameters to be included in the CSV output
 parameter: 
