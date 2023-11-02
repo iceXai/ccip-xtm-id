@@ -8,10 +8,8 @@ from loguru import logger
 from typing import Dict, List
 
 import yaml
-#import datetime
 import os
 import sys
-#import importlib
 
 # In[]
 """
@@ -31,7 +29,7 @@ class Configuration(object):
             
     """ Logger Setup """
     def configure_logger(self) -> None:
-        path = self.output_path
+        path = self._output_path
         LOG_PATH = os.path.join(path,'log')
         if not os.path.isdir(LOG_PATH):
             os.makedirs(LOG_PATH)
@@ -163,7 +161,7 @@ class Configuration(object):
         CARRIER1 = self.carrier1
         CARRIER2 = self.carrier2
         AOI = self.aoi
-        BUFFER = f'{self.buffer.zfill(5)}m'
+        BUFFER = f'{str(self.buffersize).zfill(5)}m'
         return f'{MATCHTYPE}_{CARRIER1}_{CARRIER2}_'+\
             f'{year}_{month}_{AOI}_{BUFFER}.shp'
         
@@ -176,14 +174,14 @@ class Configuration(object):
                                  product: str, dt: int) -> str:
         MATCHTYPE = self.matchtype
         AOI = self.aoi
-        BUFFER = f'{self.buffer.zfill(5)}m'
+        BUFFER = f'{str(self.buffersize).zfill(5)}m'
         return f'{MATCHTYPE}_{year}_{month}_{AOI}_{BUFFER}_{subtype}'+\
-            '_{product}_dt{dt+1}.csv'
+            f'_{product}_dt{dt+1}.csv'
             
     def _output_meta_csv_name(self, year: str, month: str, dt: int) -> str:
         MATCHTYPE = self.matchtype
         AOI = self.aoi
-        BUFFER = f'{self.buffer.zfill(5)}m'
+        BUFFER = f'{str(self.buffersize).zfill(5)}m'
         return f'{MATCHTYPE}_{year}_{month}_{AOI}_{BUFFER}_meta_dt{dt+1}.csv'
         
     def output_to_csv(self, year: str, month: str, dt: int) -> Dict[str, str]:
@@ -216,11 +214,11 @@ class Configuration(object):
     """ Date """
     @property
     def yy(self):
-        return self.config['date']['year']
+        return [str(y) for y in self.config['date']['year']]
     
     @property
     def mm(self):
-        return self.config['date']['month']
+        return [str(m).zfill(2) for m in self.config['date']['month']]
     
     """ Matching """
     @property
