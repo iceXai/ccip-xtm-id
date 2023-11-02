@@ -28,6 +28,7 @@ class PreProcessor:
     the compilation of lat/lon and file indices from all available L1p files
     """
     def __init__(self, cfg: Configuration):
+        #TODO
         self.path_carrier1 = path_to_carrier1
         self.path_carrier2 = path_to_carrier2
         self.files_carrier1 = os.listdir(self.path_carrier1)
