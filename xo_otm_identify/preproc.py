@@ -27,10 +27,12 @@ class PreProcessor:
     Class to handle the preprocessing of the given sensor/carrier combo, i.e.,
     the compilation of lat/lon and file indices from all available L1p files
     """
-    def __init__(self, cfg: Configuration):
-        #TODO
-        self.path_carrier1 = path_to_carrier1
-        self.path_carrier2 = path_to_carrier2
+    def __init__(self, cfg: Configuration, year: str, month: str):
+        self.cfg = cfg
+        self.year = year
+        self.month = month
+        self.path_carrier1 = cfg.path_to_carrier1_l1p(year, month)
+        self.path_carrier2 = cfg.path_to_carrier1_l1p(year, month)
         self.files_carrier1 = os.listdir(self.path_carrier1)
         self.files_carrier2 = os.listdir(self.path_carrier2)
         
@@ -76,12 +78,12 @@ class PreProcessor:
             nc.close()
             
             #limit data to predefined AOI's
-            if self.aoi=='arc':
+            if self.cfg.aoi=='arc':
                 west1 = (lat>=65.0) & (lon<=(-85.0)) & (lon>=(-180.0))
                 west2 = (lat>=65.0) & (lon<=(275.0)) & (lon>=(180.0))
                 east = (lat>=70.0) & (lon>=70.0) & (lon<=180.0)
                 aoi_idx = np.where(west1 | west2 | east)
-            elif self.aoi=='ant':
+            elif self.cfg.aoi=='ant':
                 aoi_idx = np.where(lat <= -55.0)
             else:
                 logger.critical(f'{self.aoi} undefined!')
@@ -93,7 +95,7 @@ class PreProcessor:
             #limit to minimum distant to coast according to the user-selected 
             #buffer range
             if d2c_available:
-                idx2pick = np.where(d2c[idx2pick] >= self.buffer)
+                idx2pick = np.where(d2c[idx2pick] >= self.cfg.buffersize)
                 
             #append to pd.df
             if len(aoi_idx)>0:
@@ -119,7 +121,7 @@ class PreProcessor:
                                               geometry=point_geometry)
         xo_gdf_dict['pts'] = xo_gdf_dict['pts'].set_crs(epsg=4326)
         #transform crs
-        xo_gdf_dict['pts'] = xo_gdf_dict['pts'].to_crs(epsg=self.epsg)
+        xo_gdf_dict['pts'] = xo_gdf_dict['pts'].to_crs(epsg=self.cfg.epsg)
         #status
         logger.info(f'Complete!')
         
@@ -132,7 +134,7 @@ class PreProcessor:
                             if len(x)>=2 else None)   
         lin_id = lin.id
         xo_gdf_dict['lin'] = gpd.GeoDataFrame(lin_id,geometry=lin.geometry,
-                                              crs="EPSG:"+str(self.epsg))
+                                              crs="EPSG:"+str(self.cfg.epsg))
         #status
         logger.info(f'Complete!')
         #assign preproc gdf
@@ -173,7 +175,7 @@ class PreProcessor:
             abs_dtd_hh = (dt2_df - dt1_df.iloc[idx1]).abs()
             abs_dtd_hh = abs_dtd_hh / pd.Timedelta(hours=1)
             #subset indices to use by specified maximum time difference
-            LINES_IDX = abs_dtd_hh[abs_dtd_hh <= self.delta_t].index
+            LINES_IDX = abs_dtd_hh[abs_dtd_hh <= self.cfg.delta_t].index
 
             #loop over the sensor2 orbit subset and collect information
             for idx2, xo_id2, lin2 in LINES2.iloc[LINES_IDX,:].itertuples():
@@ -188,12 +190,14 @@ class PreProcessor:
                 points_on_line2 = POINTS2[POINTS2['id']==xo_id2]
                 #identify XOs and only use point-like intersects 
                 #(no close "fly-by's")
-                if type(MATCH) is shapely.geometry.point.Point:
+                if type(MATCH) is shapely.geometry.point.Point \
+                    and self.cfg.matchtype is 'xo':
                     ATTRS = self._identify_XOs(MATCH, 
                                                 points_on_line1, 
                                                 points_on_line2)                           
                 #identify OTMs
-                elif type(MATCH) is shapely.geometry.linestring.LineString:
+                elif type(MATCH) is shapely.geometry.linestring.LineString \
+                    and self.cfg.matchtype is 'otm':
                     ATTRS = self._identify_OTMs(MATCH, 
                                                 points_on_line1, 
                                                 points_on_line2)
@@ -207,31 +211,31 @@ class PreProcessor:
                     
         #store data into a GeoDataFrame
         logger.info(f'Saving results to GeoDataFrame...')
-        COLUMNS = [self.matchtype+'_f1',
-                   self.matchtype+'_f2',
+        COLUMNS = [self.cfg.matchtype+'_f1',
+                   self.cfg.matchtype+'_f2',
                    'f1_rng_0',
                    'f1_rng_1',
                    'f2_rng_0',
                    'f2_rng_1',
-                   'dt_'+self.matchtype,
+                   'dt_'+self.cfg.matchtype,
                    ]
         return gpd.GeoDataFrame(attributes,
                                 geometry = geometries,
-                                crs = "EPSG:"+str(self.epsg),
+                                crs = "EPSG:"+str(self.cfg.epsg),
                                 columns = COLUMNS)
         logger.info(f'Process complete!')    
     
     def _identify_intersection(self, line1, line2) -> None:
-        if self.matchtype == 'xo':
+        if self.cfg.matchtype == 'xo':
             return lin1.intersection(lin2)
-        if self.matchtype == 'otm':
-            return lin1.intersection(lin2.buffer(self.buffer))
+        if self.cfg.matchtype == 'otm':
+            return lin1.intersection(lin2.buffer(self.cfg.buffersize))
         
     def _identify_points_in_match(self, line_points) -> None:
         #get the geometrie
         line_point_geometries = gpd.GeoSeries(line_points.geometry)
         #buffer intersect
-        match_buffered = match.buffer(self.buffer)
+        match_buffered = match.buffer(self.cfg.buffersize)
         #retrieve indices of points
         line_points_in_match = []
         for pt_idx, pt in enumerate(line_point_geometries):
@@ -330,9 +334,10 @@ class PreProcessor:
     def _export(self, id_gdf: gpd.GeoDataFrame) -> None:           
         """ Save identified XOs/OTMs to .shp file """
         #make sure crs is set
-        id_gdf = id_gdf.set_crs(epsg=self.epsg)
+        id_gdf = id_gdf.set_crs(epsg=self.cfg.epsg)
         #save
-        id_gdf.to_file(f'SHAPEFILENAMES FROM CFG')
+        OUTNAME = self.cfg.output_to_shp(self.year, self.month)
+        id_gdf.to_file(f'{OUTNAME}')
 
 
             
