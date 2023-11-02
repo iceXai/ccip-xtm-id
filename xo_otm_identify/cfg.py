@@ -117,13 +117,13 @@ class Configuration(object):
     def path_to_carrier1_l1p(self, year: str, month: str) -> str:
         CARRIER = self.carrier1
         VERSION = self._l1p_version_carrier1
-        DATE = os.join.path(year, month)
+        DATE = os.path.join(year, month)
         return self._path_to_l1p(CARRIER, VERSION, DATE)
     
     def path_to_carrier2_l1p(self, year: str, month: str) -> str:
         CARRIER = self.carrier2
         VERSION = self._l1p_version_carrier2
-        DATE = os.join.path(year, month)
+        DATE = os.path.join(year, month)
         return self._path_to_l1p(CARRIER, VERSION, DATE)
     
     def _path_to_l1p(self, carrier: str, version: str, date: str) -> str:
@@ -211,6 +211,11 @@ class Configuration(object):
         #return to caller
         return CSVDICT
     
+    def shp_exists(self, year: str, month: str) -> bool:
+        FILENAME = self.output_to_shp(year, month)
+        return os.path.isfile(FILENAME)
+        
+        
     """ Date """
     @property
     def yy(self):
