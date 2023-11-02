@@ -31,8 +31,13 @@ for yy, mm in zip(cfg.yy, cfg.mm):
     SHAPEFILE_EXISTS = cfg.shp_exists(yy, mm)
     if not SHAPEFILE_EXISTS or SHAPEFILE_EXISTS and OVERRIDE_PREPRO:
         preproc = PreProcessor(cfg, yy, mm)
+        #exectutes the preprocssor with compiling the rawdata, identifying 
+        #XOs/OTMs, and exporting the geoinfo to shapefiles
         preproc.run()
     else:
         #load it and proc
         proc = Processor(cfg, yy, mm)
+        #exectutes the procesor by importing the geoinfo shapefiles, compiling
+        #the CSV output from identified l1p/l2i files, and exporting it
+        proc.run()
         
