@@ -7,5 +7,6 @@
 # In[] 
 
 from .preproc import PreProcessor
+from .proc import Processor
 from .clap import CommandLineArgParser
 from .cfg import Configuration
