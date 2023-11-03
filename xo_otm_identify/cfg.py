@@ -7,6 +7,8 @@
 from loguru import logger
 from typing import Dict, List
 
+from .par import Parameters
+
 import yaml
 import os
 import sys
@@ -23,6 +25,8 @@ class Configuration(object):
             self.config = yaml.safe_load(f)
         #configure the logger
         self.configure_logger()
+        #initiate parameters
+        self.par = Parameters()
             
     """ Logger Setup """
     def configure_logger(self) -> None:
