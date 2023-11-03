@@ -17,6 +17,7 @@ from typing import List, Dict
 from loguru import logger
 
 from .cfg import Configuration
+from .par import Parameters
 
 
 
@@ -70,13 +71,18 @@ class Processor:
 
 
 
-    def _import_l1p_nc2df(self):
-        pass
+    def _import_l1p(self, carrier: str, r0: int, r1: int) -> pd.DataFrame:
+        #compile carrier specific parameter list
+        parameters = self.cfg.par.compile_carrier_data(carrier)
+        #create empty DataFrame 
+        df = pd.DataFrame()
+        #load mandatory file source
+        #TODO check for xarray implementation
+        # self.src[carrier] = nc_handle.getncattr(pars['src'])
+        # del pars['src']
 
 
-
-    def load_l1p_nc2pd(self, carrier: str, r0: int, r1: int,
-                   nc_handle: Dataset) -> pd.DataFrame:
+    def load_l1p_nc2pd(self, carrier: str, r0: int, r1: int) -> pd.DataFrame:
         #compile carrier specific parameter list
         pars = self.ncdict.compile_carrier_data(carrier)
         #create empty dict to fill
@@ -108,7 +114,7 @@ class Processor:
 
 
 
-    def _import_l2i_nc2df(self):
+    def _import_l2i(self, carrier: str, r0: int, r1: int) -> pd.DataFrame:
         pass
 
 
