@@ -12,9 +12,6 @@ import os
 import sys
 
 # In[]
-"""
-Configuration
-"""
 
 class Configuration(object):
     def __init__(self, cfg_file_name: str):
@@ -237,3 +234,4 @@ class Configuration(object):
     @property
     def delta_t(self):
         return self.config['matching']['dt']    
+    
