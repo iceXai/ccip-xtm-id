@@ -38,17 +38,16 @@ class PreProcessor:
         
     def run(self) -> None:
         #compile geodata
-        carrier1_gdfdict = self._compile(self.path_carrier1, 
-                                         self.files_carrier1)
-        carrier2_gdfdict = self._compile(self.path_carrier2, 
-                                         self.files_carrier2)
+        carrier1_gdfdict = self._compile_shp(self.path_carrier1, 
+                                             self.files_carrier1)
+        carrier2_gdfdict = self._compile_shp(self.path_carrier2, 
+                                             self.files_carrier2)
         #identify xo's/otm's
         id_gdf = self.identify(carrier1_gdfdict, carrier2_gdfdict)
-        
         #export to shapefiles
-        self._export(id_gdf)
+        self._export_shp(id_gdf)
             
-    def _compile(self, 
+    def _compile_shp(self, 
                  paths: List[str],
                  files: List[str]) -> Dict[str, gpd.GeoDataFrame]:
         """ Compile suitable data from 'ocean' files with geoinformation """
@@ -331,7 +330,7 @@ class PreProcessor:
         else: 
             return None
         
-    def _export(self, id_gdf: gpd.GeoDataFrame) -> None:           
+    def _export_shp(self, id_gdf: gpd.GeoDataFrame) -> None:           
         """ Save identified XOs/OTMs to .shp file """
         #make sure crs is set
         id_gdf = id_gdf.set_crs(epsg=self.cfg.epsg)
