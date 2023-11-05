@@ -32,7 +32,7 @@ class PreProcessor:
         self.year = year
         self.month = month
         self.path_carrier1 = cfg.path_to_carrier1_l1p(year, month)
-        self.path_carrier2 = cfg.path_to_carrier1_l1p(year, month)
+        self.path_carrier2 = cfg.path_to_carrier2_l1p(year, month)
         self.files_carrier1 = os.listdir(self.path_carrier1)
         self.files_carrier2 = os.listdir(self.path_carrier2)
         
