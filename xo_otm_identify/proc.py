@@ -76,19 +76,13 @@ class Processor:
             
             #otherwise continue processing with importing L1p data
             path_to_f1 = os.path.join(self.cfg._input_l1p, f1)
-            c1_df = self._import_l1p(path_to_f1, f1r0, f1r1)
+            l1b_c1, c1_df = self._import_l1p(path_to_f1, f1r0, f1r1)
             path_to_f2 = os.path.join(self.cfg._input_l1p, f2)
-            c2_df = self._import_l1p(path_to_f2, f2r0, f2r1)
+            l1b_c2, c2_df = self._import_l1p(path_to_f2, f2r0, f2r1)
             
             #insert xo/otm id
             c1_df.insert(0, self.cfg.matchtype+'_idx', idx)
             c2_df.insert(0, self.cfg.matchtype+'_idx', idx)
-            
-            #append to output
-            TYPE = self.cfg.carrier1
-            csvdict[TYPE] = pd.concat([csvdict[TYPE],c1_df],ignore_index=True)
-            TYPE = self.cfg.carrier2
-            csvdict[TYPE] = pd.concat([csvdict[TYPE],c2_df],ignore_index=True)
             
             #identify l2i matches for l1p files
             paths_l2i_c1 = self.files_carrier1_l2i
@@ -98,13 +92,61 @@ class Processor:
             
             #import L2i data
             path_to_f1_l2i = os.path.join(self.cfg._input_l2i, f1_l2i)
-            c1_l2i_df = self._import_l2i(path_to_f1_l2i, f1r0, f1r1)
+            c1_l2i_df = self._import_l2i(path_to_f1_l2i, f1r0, f1r1, True)
             path_to_f2_l2i = os.path.join(self.cfg._input_l2i, f2_l2i)
-            c2_l2i_df = self._import_l2i(path_to_f2_l2i, f2r0, f2r1)
+            c2_l2i_df = self._import_l2i(path_to_f2_l2i, f2r0, f2r1, False)
             
+            #insert xo/otm id
+            c1_l2i_df.insert(0, self.cfg.matchtype+'_idx', idx)
+            c2_l2i_df.insert(0, self.cfg.matchtype+'_idx', idx)
             
+            #append l1p/l2i to output
+            TYPE = self.cfg.carrier1
+            csvdict[TYPE]['l1p'] = pd.concat([csvdict[TYPE]['l1p'], c1_df], 
+                                             ignore_index=True)
+            csvdict[TYPE]['l2i'] = pd.concat([csvdict[TYPE]['l2i'], c1_l2i_df], 
+                                             ignore_index=True)
+            TYPE = self.cfg.carrier2
+            csvdict[TYPE]['l1p'] = pd.concat([csvdict[TYPE]['l1p'], c2_df], 
+                                             ignore_index=True)
+            csvdict[TYPE]['l2i'] = pd.concat([csvdict[TYPE]['l2i'], c2_l2i_df], 
+                                             ignore_index=True)
+            
+            #create meta data entries
+            meta = {self.cfg.matchtype+'_idx': idx,
+                    'l1p'+self.cfg.carrier1: f1,
+                    'l1p'+self.cfg.carrier2: f2,
+                    'l1b'+self.cfg.carrier1: l1b_c1,
+                    'l1b'+self.cfg.carrier2: l1b_c2,
+                    'l2i'+self.cfg.carrier1: f1_l2i,
+                    'l2i'+self.cfg.carrier2: f2_l2i,
+                    self.cfg.matchtype+'_dt': dt,
+                    }
+            
+            #convert to a dataframe
+            meta_df = pd.DataFrame([meta])
+            
+            #append it
+            csvdict['meta'] = pd.concat([csvdict['meta'], meta_df],
+                                        ignore_index=True)
+        #status
+        TYPE = self.cfg.carrier1
+        N_L1P = len(csvdict[TYPE]['l1p'])
+        N_L2I = len(csvdict[TYPE]['l2i'])
+        logger.info(f'Processed L1p/L2i waveforms ({TYPE}): {N_L1P}/{N_L2I}')
+        TYPE = self.cfg.carrier2
+        N_L1P = len(csvdict[TYPE]['l1p'])
+        N_L2I = len(csvdict[TYPE]['l2i'])
+        logger.info(f'Processed L1p/L2i waveforms ({TYPE}): {N_L1P}/{N_L2I}')
+        META = csvdict['meta']
+        N_META = len(META)
+        MATCH = self.cfg.matchtype.upper()
+        logger.info(f'Used {N_META} out of {N_MATCHES} potential {MATCH}s')
+        logger.info(f'Processing CSV output complete!')
+        #return to caller
+        return csvdict
 
-    def _import_l1p(self, path: str, r0: int, r1: int) -> pd.DataFrame:
+    def _import_l1p(self, path: str, r0: int, r1: int) -> str, pd.DataFrame:
         #compile product-level specific parameter list
         parameters = self.cfg.par.l1p_parameters()
         #retrieve parameters groups for L1p
@@ -117,7 +159,6 @@ class Processor:
             nc = xr.open_dataset(path, group = group)
             if group  == '':
                 #load mandatory file source information
-                #TODO has yet to be returned!!!
                 l1b_source = nc.attrs[parameters['src'][1]]
                 #close file connection and continue with next group
                 nc.close()
@@ -152,7 +193,7 @@ class Processor:
             #close file connection for next group
             nc.close()
         #return to caller
-        return df
+        return l1b_source, df
 
     def _identify_l2i_by_l1p(self, l1p_path: str, l2i_paths: str) -> str:
         #get l1p file name
@@ -226,120 +267,6 @@ class Processor:
         #return to caller
         return df
         
-
-
-
-
-
-    ##xo data stack function
-    def compile4csv(self) -> None:
-        #status
-        print('['+str(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+\
-                  '] > Wrap-up crossover data to csv-file')
-        #allocate output
-        csv_dict = {'c1':pd.DataFrame(),'c2':pd.DataFrame(),
-                      'meta':pd.DataFrame()}
-        #prepare for l2i output as well
-        if self.return_l2i_status():
-            csv_dict['c1_l2i'] = pd.DataFrame()
-            csv_dict['c2_l2i'] = pd.DataFrame()
-        #number ot total xo/otm
-        n_xo = len(self.out)
-        #loop over identified crossover entries
-        for gdfid,f1,f2,f1r0,f1r1,f2r0,f2r1,dt_xo,xogeo in self.out.itertuples():
-            #check delta_t
-            if dt_xo<self.delta_t:
-                #load l1b file contents
-                nc1 = Dataset(os.path.join(self.path_c1,f1))
-                nc2 = Dataset(os.path.join(self.path_c2,f2))
-                #get l1p data
-                c1_data = self.load_l1p_nc2pd(self.c1,f1r0,f1r1,nc1)
-                c2_data = self.load_l1p_nc2pd(self.c2,f2r0,f2r1,nc2)
-                #close file link
-                nc1.close()
-                nc2.close()
-                #insert xo id
-                c1_data.insert(0,self.matchtype+'_idx',gdfid)
-                c2_data.insert(0,self.matchtype+'_idx',gdfid)
-                #append to carrier stack
-                csv_dict['c1'] = pd.concat([csv_dict['c1'],
-                                              c1_data],
-                                             ignore_index=True)
-                csv_dict['c2'] = pd.concat([csv_dict['c2'],
-                                              c2_data],
-                                             ignore_index=True)
-                
-                #load l2i files and get l2i data
-                if self.return_l2i_status():
-                    #retrieve data as pandas DataFrame
-                    c1_l2i_data = self.load_l2i_nc2pd(f1,self.c1,f1r0,f1r1,True)
-                    c2_l2i_data = self.load_l2i_nc2pd(f2,self.c2,f2r0,f2r1,False)
-                    
-                    #insert xo id
-                    c1_l2i_data.insert(0,self.matchtype+'_idx',gdfid)
-                    c2_l2i_data.insert(0,self.matchtype+'_idx',gdfid)
-                    #append to carrier stack
-                    csv_dict['c1_l2i'] = pd.concat([csv_dict['c1_l2i'],
-                                                      c1_l2i_data],
-                                                     ignore_index=True)
-                    #append to carrier stack
-                    csv_dict['c2_l2i'] = pd.concat([csv_dict['c2_l2i'],
-                                                      c2_l2i_data],
-                                                     ignore_index=True)
-                    #add meta data w/ l2i
-                    meta_entry = {self.matchtype+'_idx': gdfid,
-                                  'l1p_'+self.c1: f1,
-                                  'l1p_'+self.c2: f2,
-                                  'l1b_'+self.c1: self.src[self.c1],
-                                  'l1b_'+self.c2: self.src[self.c2],
-                                  'l2i_'+self.c1: self.srcl2i[self.c1],
-                                  'l2i_'+self.c2: self.srcl2i[self.c2],
-                                  self.matchtype+'_dt': dt_xo}
-                    csv_dict['meta'] = pd.concat([csv_dict['meta'],
-                                                  pd.DataFrame([meta_entry])],
-                                                  ignore_index=True)
-                else:
-                    #add meta data w/o l2i
-                    meta_entry = {self.matchtype+'_idx': gdfid, 
-                                  'l1p_'+self.c1: f1,
-                                  'l1p_'+self.c2: f2,
-                                  'l1b_'+self.c1: self.src[self.c1],
-                                  'l1b_'+self.c2: self.src[self.c2],
-                                  self.matchtype+'_dt': dt_xo}
-                    csv_dict['meta'] = pd.concat([csv_dict['meta'],
-                                                  pd.DataFrame([meta_entry])],
-                                                  ignore_index=True)
-        #save output
-        if len(csv_dict['meta'])>0:
-            #status
-            if self.return_l2i_status():
-                print('['+str(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+\
-                      '] - Processed L1p/L2i waveforms ('+self.c1+'):'+\
-                          str(len(csv_dict['c1']))+'/'+\
-                          str(len(csv_dict['c1_l2i'])))
-                print('['+str(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+\
-                      '] - Processed L1p/L2i waveforms ('+self.c2+'):'+\
-                          str(len(csv_dict['c2']))+'/'+\
-                          str(len(csv_dict['c2_l2i'])))
-            else:
-                print('['+str(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+\
-                      '] - Processed L1p waveforms ('+self.c1+'):'+\
-                          str(len(csv_dict['c1'])))
-                print('['+str(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+\
-                      '] - Processed L1p waveforms ('+self.c2+'):'+\
-                          str(len(csv_dict['c2'])))
-            print('['+str(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+\
-                  '] - Processed '+str(len(csv_dict['meta']))+\
-                  ' out of '+str(n_xo)+' potential '+self.matchtype.upper()+'s')        
-            print('['+str(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+\
-                  '] - Processing complete - compiling CSV output...')
-            self.data4csv = csv_dict
-        else:
-            #status
-            print('['+str(dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))+\
-                  '] - Processing complete - nothing to compile...')
-
-
 
 
 
