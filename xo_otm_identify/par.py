@@ -56,13 +56,7 @@ class Parameters:
     def parameters_by_group(self, group: str) -> List:
         return [key for key in self.pardict['l1p'].keys() 
                 if self.pardict['l1p'][key][0] == group]
-        
-###
-# parameters_groups = np.unique([l1p_parameters[key][0] for key in l1p_parameters.keys()])
-group = 'classifier'
-pars_in_group = [key for key in l1p_parameters.keys() if l1p_parameters[key][0] == group]
-###
-        
+
     def validate_cfg_parameters(self, parameters: list) -> bool:
         #store for later use
         self.cfg_parameters = parameters
