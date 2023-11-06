@@ -276,110 +276,75 @@ class Processor:
         return df
         
     def _export(self, csvdict: Dict[str, pd.DataFrame]) -> None:
+        #status
+        logger.info(f'Dumping data to CSV...')
         #subset meta data to index and time difference data
         MATCH_IDX = self.cfg.matchtype + '_idx'
         MATCH_DT = self.cfg.matchtype + '_dt'
         META = csvdict['meta'][[MATCH_IDX, MATCH_DT]]
+        
         #subset carrier data to index
         TYPE = self.cfg.carrier1
-        C1_L1P_IDX = csvdict[TYPE][MATCH_IDX]
-        C1_L2I_IDX = csvdict[TYPE][MATCH_IDX]
+        C1_L1P_IDX = csvdict[TYPE]['l1p'][MATCH_IDX]
+        C1_L2I_IDX = csvdict[TYPE]['l2i'][MATCH_IDX]
         TYPE = self.cfg.carrier2
-        C2_L1P_IDX = csvdict[TYPE][MATCH_IDX]
-        C2_L2I_IDX = csvdict[TYPE][MATCH_IDX]
+        C2_L1P_IDX = csvdict[TYPE]['l1p'][MATCH_IDX]
+        C2_L2I_IDX = csvdict[TYPE]['l2i'][MATCH_IDX]
+        
         #get maximum time difference
         DT_MAX = self.cfg.delta_t
+        
         #loop over time differences in one-hourly steps
-        for idx, dt in enumerate(range(0,DT_MAX)):
-    
+        DT_1H = range(0,DT_MAX)
+        for idx, dt in enumerate(DT_1H):
+            #identify time-dependent match indices
+            if idx == 0:
+                #for interval between dt=0 and dt=1 include both sides [0:1]
+                dt_sub = META[MATCH_DT].between(dt,(dt+1))
+            else:
+                #in all other cases exclude left-hand side ]dt:dt+1]
+                dt_sub = META[MATCH_DT].between(dt,(dt+1), inclusive='right')
+            MATCH_DT_IDX = META[MATCH_IDX][dt_sub].tolist()
             
-    
-    
-    
-    #save identified crossovers to csv file
-    def data2csv(self) -> None:
-        if self.data4csv is not None:
-            #data shortcuts
-            meta = self.data4csv['meta'][[self.matchtype+'_idx',self.matchtype+'_dt']]
-            c1_xo_id = self.data4csv['c1'][self.matchtype+'_idx']
-            c2_xo_id = self.data4csv['c2'][self.matchtype+'_idx']
-            if self.return_l2i_status():
-                c1l2i_xo_id = self.data4csv['c1_l2i'][self.matchtype+'_idx']
-                c2l2i_xo_id = self.data4csv['c2_l2i'][self.matchtype+'_idx']
-            #loop over time differences in one-hourly steps
-            for i, dt in enumerate(list(range(0,int(self.delta_t)))):
-                #find matching XO's in meta data
-                #in the first round include both sides [0:1]
-                if i == 0:
-                    valid_xo_idx = meta[self.matchtype+'_idx'][meta[self.matchtype+'_dt'].between(dt,(dt+1))].tolist()
+            #pick indices for each carrier and the meta data
+            c1_l1p_idx_in_csv = []
+            c2_l1p_idx_in_csv = []
+            c1_l2i_idx_in_csv = []
+            c2_l2i_idx_in_csv = []
+            meta_idx_in_csv = []
+            for match_idx in MATCH_DT_IDX:
+                #carrier 1 L1p
+                type_index = C1_L1P_IDX.index[C1_L1P_IDX == match_idx]
+                c1_l1p_idx_in_csv.extend(type_index)
+                #carrier 1 L2i
+                type_index = C1_L2I_IDX.index[C1_L2I_IDX == match_idx]
+                c1_l2i_idx_in_csv.extend(type_index)
+                #carrier 2 L1p
+                type_index = C2_L1P_IDX.index[C2_L1P_IDX == match_idx]
+                c2_l1p_idx_in_csv.extend(type_index)
+                #carrier 2 L2i
+                type_index = C2_L2I_IDX.index[C2_L2I_IDX == match_idx]
+                c2_l2i_idx_in_csv.extend(type_index)                
+                #meta
+                type_index = META.index[META[MATCH_IDX] == match_idx]
+                meta_idx_in_csv.extend(type_index)
                 
-                #in all others exclude left side ]dt:dt+1], i.e. ]1,2]!
-                else:
-                    valid_xo_idx = meta[self.matchtype+'_idx'][meta[self.matchtype+'_dt'].between(dt,(dt+1),
-                                                                  inclusive='right')].tolist()
-                
-                #pick correct entries/indices for each carrier
-                c1_idx_in_csv = []
-                for current_idx in valid_xo_idx:
-                    c1_idx_in_csv.extend(c1_xo_id.index[c1_xo_id == current_idx])
-                c2_idx_in_csv = []
-                for current_idx in valid_xo_idx:
-                    c2_idx_in_csv.extend(c2_xo_id.index[c2_xo_id == current_idx])
-                meta_idx_in_csv = []
-                for current_idx in valid_xo_idx: 
-                    meta_idx_in_csv.extend(meta.index[meta[self.matchtype+'_idx'] == current_idx])
-                
-                #with l2i to output as well
-                if self.return_l2i_status():
-                    c1l2i_idx_in_csv = []
-                    for current_idx in valid_xo_idx:
-                        c1l2i_idx_in_csv.extend(c1l2i_xo_id.index[c1l2i_xo_id == current_idx])
-                    c2l2i_idx_in_csv = []
-                    for current_idx in valid_xo_idx:
-                        c2l2i_idx_in_csv.extend(c2l2i_xo_id.index[c2l2i_xo_id == current_idx])
-                
-                #output to csv
-                self.data4csv['c1'].iloc[c1_idx_in_csv,:].to_csv(''.join([self.out2csv,'_',
-                                                                       self.c1,
-                                                                       '_l1p_dt',
-                                                                       str(dt+1),
-                                                                       '.csv']),
-                                                              index=False)
-                self.data4csv['c2'].iloc[c2_idx_in_csv,:].to_csv(''.join([self.out2csv,'_',
-                                                                       self.c2,
-                                                                       '_l1p_dt',
-                                                                       str(dt+1),
-                                                                       '.csv']),
-                                                              index=False)
-                self.data4csv['meta'].iloc[meta_idx_in_csv,:].to_csv(''.join([self.out2csv,
-                                                                           '_meta',
-                                                                           '_dt',
-                                                                           str(dt+1),
-                                                                           '.csv']),
-                                                                  index=False)
-                
-                #output l2i if specified
-                if self.return_l2i_status():
-                    self.data4csv['c1_l2i'].iloc[c1l2i_idx_in_csv,:].to_csv(''.join([self.out2csv,
-                                                                                  '_',
-                                                                                  self.c1,
-                                                                                  '_l2i_dt',
-                                                                                  str(dt+1),
-                                                                                  '.csv']),
-                                                                         index=False)
-                    self.data4csv['c2_l2i'].iloc[c2l2i_idx_in_csv,:].to_csv(''.join([self.out2csv,
-                                                                                  '_',
-                                                                                  self.c2,
-                                                                                  '_l2i_dt',
-                                                                                  str(dt+1),
-                                                                                  '.csv']),
-                                                                         index=False)
-
-    
-    
-    
-    
-    
-    
-    
-    
+            #output to CSV for current time difference
+            CSVOUT = self.cfg.output_to_csv(self.year, self.month, dt)
+            TYPE = self.cfg.carrier1
+            CSV_L1P = csvdict[TYPE]['l1p'].iloc[c1_l1p_idx_in_csv,:]
+            CSV_L1P.to_csv(CSVOUT[TYPE]['l1p'], index=False)
+            CSV_L2I = csvdict[TYPE]['l2i'].iloc[c1_l2i_idx_in_csv,:]
+            CSV_L2I.to_csv(CSVOUT[TYPE]['l2i'], index=False)
+            TYPE = self.cfg.carrier2
+            CSV_L1P = csvdict[TYPE]['l1p'].iloc[c2_l1p_idx_in_csv,:]
+            CSV_L1P.to_csv(CSVOUT[TYPE]['l1p'], index=False)
+            CSV_L2I = csvdict[TYPE]['l2i'].iloc[c2_l2i_idx_in_csv,:]
+            CSV_L2I.to_csv(CSVOUT[TYPE]['l2i'], index=False)
+            TYPE = 'meta'
+            CSV_META = csvdict[TYPE].iloc[meta_idx_in_csv,:]
+            CSV_META.to_csv(CSVOUT[TYPE], index=False)
+            
+        #status
+        logger.info('Job completed! :)')
+        
