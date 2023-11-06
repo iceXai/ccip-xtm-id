@@ -111,10 +111,4 @@ pars_in_group = [key for key in l1p_parameters.keys() if l1p_parameters[key][0] 
         # self._set_product_flags(cdict)
         #return to caller
         return pdict
-    
-    # def _set_product_flags(self, cdict: Dict[str, str]) -> None:
-    #     #set status flags according to the carreir dictionary
-    #     if len(cdict['l1p'])>0:
-    #         self.has_l1p_parameters = True
-    #     if len(cdict['l2i'])>0:
-    #         self.has_l2i_parameters = True
+
