@@ -34,10 +34,10 @@ class Processor:
         self.cfg = cfg
         self.year = year
         self.month = month
-        self.path_carrier1 = cfg.path_to_carrier1_l2i(year, month)
-        self.path_carrier2 = cfg.path_to_carrier2_l2i(year, month)
-        self.files_carrier1 = os.listdir(self.path_carrier1)
-        self.files_carrier2 = os.listdir(self.path_carrier2)
+        self.path_carrier1_l2i = cfg.path_to_carrier1_l2i(year, month)
+        self.path_carrier2_l2i = cfg.path_to_carrier2_l2i(year, month)
+        self.files_carrier1_l2i = os.listdir(self.path_carrier1_l2i)
+        self.files_carrier2_l2i = os.listdir(self.path_carrier2_l2i)
     
     def run(self) -> None:
         #import geodata
@@ -73,21 +73,36 @@ class Processor:
             #check time difference mismatch and skip
             if dt > self.cfg.delta_t:
                 continue
+            
             #otherwise continue processing with importing L1p data
             path_to_f1 = os.path.join(self.cfg._input_l1p, f1)
             c1_df = self._import_l1p(path_to_f1, f1r0, f1r1)
             path_to_f2 = os.path.join(self.cfg._input_l1p, f2)
             c2_df = self._import_l1p(path_to_f2, f2r0, f2r1)
+            
             #insert xo/otm id
             c1_df.insert(0, self.cfg.matchtype+'_idx', idx)
             c2_df.insert(0, self.cfg.matchtype+'_idx', idx)
+            
             #append to output
             TYPE = self.cfg.carrier1
             csvdict[TYPE] = pd.concat([csvdict[TYPE],c1_df],ignore_index=True)
             TYPE = self.cfg.carrier2
             csvdict[TYPE] = pd.concat([csvdict[TYPE],c2_df],ignore_index=True)
-
-
+            
+            #identify l2i matches for l1p files
+            paths_l2i_c1 = self.files_carrier1_l2i
+            f1_l2i = self._identify_l2i_by_l1p(path_to_f1, paths_l2i_c1)
+            paths_l2i_c2 = self.files_carrier2_l2i
+            f2_l2i = self._identify_l2i_by_l1p(path_to_f2, paths_l2i_c2)
+            
+            #import L2i data
+            path_to_f1_l2i = os.path.join(self.cfg._input_l2i, f1_l2i)
+            c1_l2i_df = self._import_l2i(path_to_f1_l2i, f1r0, f1r1)
+            path_to_f2_l2i = os.path.join(self.cfg._input_l2i, f2_l2i)
+            c2_l2i_df = self._import_l2i(path_to_f2_l2i, f2r0, f2r1)
+            
+            
 
     def _import_l1p(self, path: str, r0: int, r1: int) -> pd.DataFrame:
         #compile product-level specific parameter list
@@ -139,106 +154,79 @@ class Processor:
         #return to caller
         return df
 
-    def _import_l2i_ref(self, path: str, r0: int, r1: int) -> pd.DataFrame:
-        #compile product-level specific parameter list
-        parameters = self.cfg.par.l2i_parameters()
+    def _identify_l2i_by_l1p(self, l1p_path: str, l2i_paths: str) -> str:
         #get l1p file name
-        l1p = pathlib.Path(path).name
+        l1p = pathlib.Path(l1p_path).name
         #retrieve time/date tag from file name
         tag = l1p.split('-')[6:8]
         tag = [dt.datetime.strptime(tag[0],'%Y%m%dT%H%M%S'),
                dt.datetime.strptime(tag[1],'%Y%m%dT%H%M%S')]
         #get l2i files
-        l2i = self.files_carrier1
-        l2i_tag = [f.split('-')[6:8] for f in l2i]
-
-
-
-
-    def _import_l2i_match(self, path: str, r0: int, r1: int) -> pd.DataFrame:
-        #compile product-level specific parameter list
-        parameters = self.cfg.par.l2i_parameters()
-
-
-
-    def _identify_l2i_by_l1p(self, path: str):
-        pass
-
-
-
-
-    def load_l2i_nc2pd(self,sensorfile: str, carrier: str,
-                       r0: int, r1: int, is_ref: bool) -> pd.DataFrame:
-        #compile carrier specific parameter list
-        pars = self.ncdict.compile_carrier_data(carrier)
-            
-        #retrieve time/date tag from file name
-        tag = sensorfile.split('-')[6:8]
-        tag = [dt.datetime.strptime(tag[0],'%Y%m%dT%H%M%S'),
-               dt.datetime.strptime(tag[1],'%Y%m%dT%H%M%S')]
-        #create search
-        #search_list = self.l2imeta['files'][carrier]
-        
+        l2i_tags = [f.split('-')[6:8] for f in l2i_paths]
         #id correct l2i match
-        tmp = [l2i.split('-')[6:8] for l2i in self.l2imeta['files'][carrier]]
-        for i,t in enumerate(tmp):
+        l2i_source = None
+        for idx, l2i_tag in enumerate(l2i_tags):
             #convert to datetime
-            t_dt = [dt.datetime.strptime(t[0],'%Y%m%dT%H%M%S'),
-                    dt.datetime.strptime(t[1][:-5],'%Y%m%dT%H%M%S')]
+            l2i_tag = [dt.datetime.strptime(l2i_tag[0],'%Y%m%dT%H%M%S'),
+                       dt.datetime.strptime(l2i_tag[1][:-5],'%Y%m%dT%H%M%S')]
             #calculate time difference in total seconds
-            dt_start = t_dt[0]-tag[0]
-            dt_end = t_dt[1]-tag[1]
+            dt_start = l2i_tag[0]-tag[0]
+            total_dt_start = dt_start.total_seconds()
+            dt_end = l2i_tag[1]-tag[1]
+            total_dt_end = dt_end.total_seconds()
             #only keep in case dt is exact match
-            if dt_start.total_seconds() == 0 and \
-                dt_end.total_seconds() == 0:
-                #file name
-                l2i = self.l2imeta['files'][carrier][i]
-                #path
-                pathl2i = self.l2imeta['paths'][carrier]
-                #compile full file path
-                fp = os.path.join(pathl2i,l2i)
-                #store file name for later use in meta data
-                self.srcl2i[carrier] = l2i
+            if total_dt_start == 0 and total_dt_end == 0:
+                #path/file name
+                l2i = l2i_paths[idx]
+                #load mandatory file source information
+                l2i_source = pathlib.Path(l2i).name
                 #break loop in case one is found
                 break
-        
+        if l2i_source is None:
+            logger.warning(f'No L2i match found for L1p file: {l1p}')
+        #return to caller
+        return l2i_source
+
+    def _import_l2i(self, path: str, r0: int, r1: int, 
+                    ref: bool) -> pd.DataFrame:
+        #compile product-level specific parameter list
+        parameters = self.cfg.par.l2i_parameters()
         #open file connection
-        nc_handle = Dataset(fp)
-        #create empty dict to fill
-        data_df = pd.DataFrame()
+        nc = xr.open_dataset(path)
         #load the data
-        if is_ref:
-            data = {}
-            data['frb'] = nc_handle['sea_ice_freeboard'][r0:r1]
-            data['sft'] = nc_handle['surface_type'][r0:r1]
-            if self.ncdict.has_l2_pars:
-                for key in pars['l2']:
-                    data[key] = nc_handle[pars['l2'][key]][r0:r1]
-            nc_handle.close()
-            #convert it to DataFrame
-            df = pd.DataFrame(data)
-            #add it to the existing one
-            data_df = pd.concat([data_df,df],axis=1)
-        else:
-            data = {}
-            frb = nc_handle['threshold_freeboards'][r0:r1,:]
-            ths = nc_handle['tfmra_thresholds'][:]
-            data['sft'] = nc_handle['surface_type'][r0:r1]
-            if self.ncdict.has_l2_pars:
-                for key in pars['l2']:
-                    data[key] = nc_handle[pars['l2'][key]][r0:r1]
-            nc_handle.close()
+        DATA = {}
+        #load common parameters
+        DATA['sft'] = nc['surface_type'].values[r0:r1]
+        for par in parameters:
+            #get in-file variable name
+            VAR = parameters[par]
+            #try to get variable
+            try:
+                DATA[par] = nc[VAR].values[r0:r1]
+            except KeyError:
+                logger.warning(f'Parameter {VAR} not found in L2i file')
+                continue    
+        if ref:
+            #load reference sensor specific things
+            DATA['frb'] = nc['sea_ice_freeboard'].values[r0:r1]
+        #convert it to DataFrame
+        df = pd.DataFrame(DATA)
+        if no ref:
+            #load match sensor specific things
+            frb = nc['threshold_freeboards'].values[r0:r1,:]
+            ths = nc['tfmra_thresholds'].values
             #convert it to DataFrame w/ correct column names
-            df = pd.DataFrame(frb,
-                              columns=['frb_th'+\
-                                       str(format(np.round(th,2),'.2f'))[2:]
-                                       for th in ths])
-            #append surface-type data
-            df = pd.concat([df,pd.DataFrame(data)],axis=1)
-            #add it to the existing one
-            data_df = pd.concat([data_df,df],axis=1)
-        #return it
-        return data_df
+            frb_columns = ['frb_th'+str(format(np.round(th,2),'.2f'))[2:]
+                           for th in ths]
+            frb_df = pd.DataFrame(frb, columns = frb_columns)
+            #prepend multi-threshold freeboard data
+            par_df = pd.concat([frb_df, df],axis=1)
+        #close file connection
+        nc.close()
+        #return to caller
+        return df
+        
+
 
 
 
