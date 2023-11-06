@@ -45,7 +45,15 @@ class Processor:
         #compile csv data
         csvdict = self._compile_csv(gdf)
         #export to csv
-        self._export(csvdict)
+        N_MATCHES = len(csvdict['meta'])
+        if N_MATCHES > 0:
+            #status
+            logger.info(f'Output data to CSV...')
+            #export data to CSV
+            self._export(csvdict)
+        else:
+            #status
+            logger.critical(f'No data found to export!')
     
     def _import_shp(self) -> gpd.GeoDataFrame:
         INNAME = self.cfg.output_to_shp(self.year, self.month)
@@ -81,8 +89,8 @@ class Processor:
             l1b_c2, c2_df = self._import_l1p(path_to_f2, f2r0, f2r1)
             
             #insert xo/otm id
-            c1_df.insert(0, self.cfg.matchtype+'_idx', idx)
-            c2_df.insert(0, self.cfg.matchtype+'_idx', idx)
+            c1_df.insert(0, self.cfg.matchtype + '_idx', idx)
+            c2_df.insert(0, self.cfg.matchtype + '_idx', idx)
             
             #identify l2i matches for l1p files
             paths_l2i_c1 = self.files_carrier1_l2i
@@ -97,8 +105,8 @@ class Processor:
             c2_l2i_df = self._import_l2i(path_to_f2_l2i, f2r0, f2r1, False)
             
             #insert xo/otm id
-            c1_l2i_df.insert(0, self.cfg.matchtype+'_idx', idx)
-            c2_l2i_df.insert(0, self.cfg.matchtype+'_idx', idx)
+            c1_l2i_df.insert(0, self.cfg.matchtype + '_idx', idx)
+            c2_l2i_df.insert(0, self.cfg.matchtype + '_idx', idx)
             
             #append l1p/l2i to output
             TYPE = self.cfg.carrier1
@@ -113,14 +121,14 @@ class Processor:
                                              ignore_index=True)
             
             #create meta data entries
-            meta = {self.cfg.matchtype+'_idx': idx,
+            meta = {self.cfg.matchtype + '_idx': idx,
                     'l1p'+self.cfg.carrier1: f1,
                     'l1p'+self.cfg.carrier2: f2,
                     'l1b'+self.cfg.carrier1: l1b_c1,
                     'l1b'+self.cfg.carrier2: l1b_c2,
                     'l2i'+self.cfg.carrier1: f1_l2i,
                     'l2i'+self.cfg.carrier2: f2_l2i,
-                    self.cfg.matchtype+'_dt': dt,
+                    self.cfg.matchtype + '_dt': dt,
                     }
             
             #convert to a dataframe
@@ -146,7 +154,7 @@ class Processor:
         #return to caller
         return csvdict
 
-    def _import_l1p(self, path: str, r0: int, r1: int) -> str, pd.DataFrame:
+    def _import_l1p(self, path: str, r0: int, r1: int) -> (str, pd.DataFrame):
         #compile product-level specific parameter list
         parameters = self.cfg.par.l1p_parameters()
         #retrieve parameters groups for L1p
@@ -193,7 +201,7 @@ class Processor:
             #close file connection for next group
             nc.close()
         #return to caller
-        return l1b_source, df
+        return (l1b_source, df)
 
     def _identify_l2i_by_l1p(self, l1p_path: str, l2i_paths: str) -> str:
         #get l1p file name
@@ -252,7 +260,7 @@ class Processor:
             DATA['frb'] = nc['sea_ice_freeboard'].values[r0:r1]
         #convert it to DataFrame
         df = pd.DataFrame(DATA)
-        if no ref:
+        if not ref:
             #load match sensor specific things
             frb = nc['threshold_freeboards'].values[r0:r1,:]
             ths = nc['tfmra_thresholds'].values
@@ -267,14 +275,111 @@ class Processor:
         #return to caller
         return df
         
+    def _export(self, csvdict: Dict[str, pd.DataFrame]) -> None:
+        #subset meta data to index and time difference data
+        MATCH_IDX = self.cfg.matchtype + '_idx'
+        MATCH_DT = self.cfg.matchtype + '_dt'
+        META = csvdict['meta'][[MATCH_IDX, MATCH_DT]]
+        #subset carrier data to index
+        TYPE = self.cfg.carrier1
+        C1_L1P_IDX = csvdict[TYPE][MATCH_IDX]
+        C1_L2I_IDX = csvdict[TYPE][MATCH_IDX]
+        TYPE = self.cfg.carrier2
+        C2_L1P_IDX = csvdict[TYPE][MATCH_IDX]
+        C2_L2I_IDX = csvdict[TYPE][MATCH_IDX]
+        #get maximum time difference
+        DT_MAX = self.cfg.delta_t
+        #loop over time differences in one-hourly steps
+        for idx, dt in enumerate(range(0,DT_MAX)):
+    
+            
+    
+    
+    
+    #save identified crossovers to csv file
+    def data2csv(self) -> None:
+        if self.data4csv is not None:
+            #data shortcuts
+            meta = self.data4csv['meta'][[self.matchtype+'_idx',self.matchtype+'_dt']]
+            c1_xo_id = self.data4csv['c1'][self.matchtype+'_idx']
+            c2_xo_id = self.data4csv['c2'][self.matchtype+'_idx']
+            if self.return_l2i_status():
+                c1l2i_xo_id = self.data4csv['c1_l2i'][self.matchtype+'_idx']
+                c2l2i_xo_id = self.data4csv['c2_l2i'][self.matchtype+'_idx']
+            #loop over time differences in one-hourly steps
+            for i, dt in enumerate(list(range(0,int(self.delta_t)))):
+                #find matching XO's in meta data
+                #in the first round include both sides [0:1]
+                if i == 0:
+                    valid_xo_idx = meta[self.matchtype+'_idx'][meta[self.matchtype+'_dt'].between(dt,(dt+1))].tolist()
+                
+                #in all others exclude left side ]dt:dt+1], i.e. ]1,2]!
+                else:
+                    valid_xo_idx = meta[self.matchtype+'_idx'][meta[self.matchtype+'_dt'].between(dt,(dt+1),
+                                                                  inclusive='right')].tolist()
+                
+                #pick correct entries/indices for each carrier
+                c1_idx_in_csv = []
+                for current_idx in valid_xo_idx:
+                    c1_idx_in_csv.extend(c1_xo_id.index[c1_xo_id == current_idx])
+                c2_idx_in_csv = []
+                for current_idx in valid_xo_idx:
+                    c2_idx_in_csv.extend(c2_xo_id.index[c2_xo_id == current_idx])
+                meta_idx_in_csv = []
+                for current_idx in valid_xo_idx: 
+                    meta_idx_in_csv.extend(meta.index[meta[self.matchtype+'_idx'] == current_idx])
+                
+                #with l2i to output as well
+                if self.return_l2i_status():
+                    c1l2i_idx_in_csv = []
+                    for current_idx in valid_xo_idx:
+                        c1l2i_idx_in_csv.extend(c1l2i_xo_id.index[c1l2i_xo_id == current_idx])
+                    c2l2i_idx_in_csv = []
+                    for current_idx in valid_xo_idx:
+                        c2l2i_idx_in_csv.extend(c2l2i_xo_id.index[c2l2i_xo_id == current_idx])
+                
+                #output to csv
+                self.data4csv['c1'].iloc[c1_idx_in_csv,:].to_csv(''.join([self.out2csv,'_',
+                                                                       self.c1,
+                                                                       '_l1p_dt',
+                                                                       str(dt+1),
+                                                                       '.csv']),
+                                                              index=False)
+                self.data4csv['c2'].iloc[c2_idx_in_csv,:].to_csv(''.join([self.out2csv,'_',
+                                                                       self.c2,
+                                                                       '_l1p_dt',
+                                                                       str(dt+1),
+                                                                       '.csv']),
+                                                              index=False)
+                self.data4csv['meta'].iloc[meta_idx_in_csv,:].to_csv(''.join([self.out2csv,
+                                                                           '_meta',
+                                                                           '_dt',
+                                                                           str(dt+1),
+                                                                           '.csv']),
+                                                                  index=False)
+                
+                #output l2i if specified
+                if self.return_l2i_status():
+                    self.data4csv['c1_l2i'].iloc[c1l2i_idx_in_csv,:].to_csv(''.join([self.out2csv,
+                                                                                  '_',
+                                                                                  self.c1,
+                                                                                  '_l2i_dt',
+                                                                                  str(dt+1),
+                                                                                  '.csv']),
+                                                                         index=False)
+                    self.data4csv['c2_l2i'].iloc[c2l2i_idx_in_csv,:].to_csv(''.join([self.out2csv,
+                                                                                  '_',
+                                                                                  self.c2,
+                                                                                  '_l2i_dt',
+                                                                                  str(dt+1),
+                                                                                  '.csv']),
+                                                                         index=False)
 
-
-
-
-
-
-
-
-    def _export(self) -> None:
-        pass
+    
+    
+    
+    
+    
+    
+    
     
