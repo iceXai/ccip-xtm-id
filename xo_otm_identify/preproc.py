@@ -7,6 +7,7 @@
 # In[]
 
 import os
+import shapely
 
 import pandas as pd
 import geopandas as gpd
