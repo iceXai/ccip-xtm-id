@@ -35,7 +35,7 @@ class Parameters:
                           'ssk': ['classifier','stack_skewness'],
                           'src': ['', 'mission_data_source'],
                           }
-        l2i_parameetrs = {'sla': 'sea_level_anomaly',
+        l2i_parameters = {'sla': 'sea_level_anomaly',
                           'mss': 'mean_sea_surface',
                           'elv': 'elevation',
                           'pdc': 'pulse_deblurring_correction',
