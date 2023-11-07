@@ -43,16 +43,17 @@ class Validator(object):
     
     def validate_l1p_pathing(self) -> bool:
         INVALID = False
-        PATH = self.cfg.path_to_carrier1_l1p
-        if not os.path.isdir(PATH):
-            msg = f'L1p pathing for {CARRIER1} is incorrect'
-            logger.critical(msg)
-            INVALID = True
-        PATH = self.cfg.path_to_carrier2_l1p
-        if not os.path.isdir(PATH):
-            msg = f'L1p pathing for {CARRIER2} is incorrect'
-            logger.critical(msg)
-            INVALID = True
+        for yy, mm in zip(self.cfg.yy, self.cfg.mm):
+            PATH = self.cfg.path_to_carrier1_l1p(yy, mm)
+            if not os.path.isdir(PATH):
+                msg = f'L1p pathing for {CARRIER1} is incorrect for {yy}/{mm}'
+                logger.critical(msg)
+                INVALID = True
+            PATH = self.cfg.path_to_carrier2_l1p(yy, mm)
+            if not os.path.isdir(PATH):
+                msg = f'L1p pathing for {CARRIER2} is incorrect for {yy}/{mm}'
+                logger.critical(msg)
+                INVALID = True
         if INVALID:
             return False            
         else:
@@ -60,16 +61,17 @@ class Validator(object):
         
     def validate_l2i_pathing(self) -> bool:
         INVALID = False
-        PATH = self.cfg.path_to_carrier1_l2i
-        if not os.path.isdir(PATH):
-            msg = f'L2i pathing for {CARRIER1} is incorrect'
-            logger.critical(msg)
-            INVALID = True
-        PATH = self.cfg.path_to_carrier2_l2i
-        if not os.path.isdir(PATH):
-            msg = f'L2i pathing for {CARRIER2} is incorrect'
-            logger.critical(msg)
-            INVALID = True
+        for yy, mm in zip(self.cfg.yy, self.cfg.mm):
+            PATH = self.cfg.path_to_carrier1_l2i(yy, mm)
+            if not os.path.isdir(PATH):
+                msg = f'L2i pathing for {CARRIER1} is incorrect for {yy}/{mm}'
+                logger.critical(msg)
+                INVALID = True
+            PATH = self.cfg.path_to_carrier2_l2i(yy, mm)
+            if not os.path.isdir(PATH):
+                msg = f'L2i pathing for {CARRIER2} is incorrect for {yy}/{mm}'
+                logger.critical(msg)
+                INVALID = True
         if INVALID:
             return False            
         else:
