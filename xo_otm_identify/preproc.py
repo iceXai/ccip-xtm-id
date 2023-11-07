@@ -190,13 +190,13 @@ class PreProcessor:
                 #identify XOs and only use point-like intersects 
                 #(no close "fly-by's")
                 if type(MATCH) is shapely.geometry.point.Point \
-                    and self.cfg.matchtype is 'xo':
+                    and self.cfg.matchtype == 'xo':
                     ATTRS = self._identify_XOs(MATCH, 
                                                 points_on_line1, 
                                                 points_on_line2)                           
                 #identify OTMs
                 elif type(MATCH) is shapely.geometry.linestring.LineString \
-                    and self.cfg.matchtype is 'otm':
+                    and self.cfg.matchtype == 'otm':
                     ATTRS = self._identify_OTMs(MATCH, 
                                                 points_on_line1, 
                                                 points_on_line2)
