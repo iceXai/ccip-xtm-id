@@ -6,6 +6,8 @@
 
 # In[]
 
+import os
+
 from .cfg import Configuration
 
 # In[]
