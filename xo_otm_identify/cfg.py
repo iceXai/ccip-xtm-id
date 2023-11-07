@@ -77,9 +77,9 @@ class Configuration(object):
     @property
     def epsg(self):
         if self.aoi=='arc':
-            self.epsg = 6931
+            return 6931
         else:
-            self.epsg = 6932
+            return 6932
             
     """ I/O """
     @property
