@@ -16,54 +16,66 @@ class Validator(object):
         
     def validate(self) -> None:
         VALID = []
-        VALID.append(self.validate_sensor_carrier_combination())
-        VALID.append(self.validate_version())
-        VALID.append(self.validate_aois())
+        VALID.append(self.validate_carrier_combination())
+        VALID.append(self.validate_l1p_pathing())
+        VALID.append(self.validate_l2i_pathing())
+        VALID.append(self.validate_aoi())
         if not all(VALID):
             sys.exit()
     
-    def validate_sensor_carrier_combination(self) -> bool:
+    def validate_carrier_combination(self) -> bool:
         #get configuration settings
-        SENSOR = self.cfg.sensor  
-        CARRIER = self.cfg.carrier
-        COMBO = f'{CARRIER}/{SENSOR}'
+        CARRIER1 = self.cfg.carrier1
+        CARRIER2 = self.cfg.carrier2
+        COMBO = f'{CARRIER1}/{CARRIER2}'
         #valid combinations
-        VALID_COMBOS = ['terra/modis','aqua/modis','s3a/olci','s3a/slstr',
-                        's3b/olci','s3b/slstr','snpp/viirs','jpss1/viirs']
+        VALID_COMBOS = ['cryosat2/envisat','envisat/ers2','ers2/ers1']
         #validate choices
         if COMBO not in VALID_COMBOS:
-            msg = f'Combination of {CARRIER}/{SENSOR} is invalid/unsupported!'
+            msg = f'{CARRIER1}/{CARRIER2} combination is invalid/unsupported!'
             logger.critical(msg)
             return False
         else:
             return True
     
-    def validate_version(self) -> bool:
-        VERSION = self.cfg.version
-        SENSOR = self.cfg.sensor  
-        META_FILE = f'{SENSOR}_{VERSION}.yaml'
-        META_PATH = os.path.join(os.getcwd(), 'meta', META_FILE)
-        #validate existence
-        if not os.path.isfile(META_PATH):
-            msg = f'Version {VERSION} is incorrect, no corresponding meta '+\
-                f'could file found!'
+    def validate_l1p_pathing(self) -> bool:
+        INVALID = False
+        PATH = self.cfg.path_to_carrier1_l1p
+        if not os.path.isdir(PATH):
+            msg = f'L1p pathing for {CARRIER1} is incorrect'
             logger.critical(msg)
-            return False
+            INVALID = True
+        PATH = self.cfg.path_to_carrier2_l1p
+        if not os.path.isdir(PATH):
+            msg = f'L1p pathing for {CARRIER2} is incorrect'
+            logger.critical(msg)
+            INVALID = True
+        if INVALID:
+            return False            
+        else:
+            return True
+        
+    def validate_l2i_pathing(self) -> bool:
+        INVALID = False
+        PATH = self.cfg.path_to_carrier1_l2i
+        if not os.path.isdir(PATH):
+            msg = f'L2i pathing for {CARRIER1} is incorrect'
+            logger.critical(msg)
+            INVALID = True
+        PATH = self.cfg.path_to_carrier2_l2i
+        if not os.path.isdir(PATH):
+            msg = f'L2i pathing for {CARRIER2} is incorrect'
+            logger.critical(msg)
+            INVALID = True
+        if INVALID:
+            return False            
         else:
             return True
 
-    def validate_aois(self) -> bool:
-        USER_AOIS = self.cfg.user_aois
-        with open(os.path.join(os.getcwd(), 'aoi', 'list_of_aois.yaml')) as f:
-            AOIS = yaml.safe_load(f)
-        INVALID = False
+    def validate_aoi(self) -> bool:
+        USER_AOI = self.cfg.aoi        
         #validate choice
-        for aoi in USER_AOIS:
-            if aoi not in AOIS['aois'].keys():
-                msg = f'Choice of {aoi} is not supported!'
-                logger.critical(msg)
-                INVALID = True
-        if INVALID:
+        if USER_AOI != 'arc' and USER_AOI != 'ant'
             return False
         else:
             return True
