@@ -75,7 +75,7 @@ class Validator(object):
     def validate_aoi(self) -> bool:
         USER_AOI = self.cfg.aoi        
         #validate choice
-        if USER_AOI != 'arc' and USER_AOI != 'ant'
+        if USER_AOI != 'arc' and USER_AOI != 'ant':
             return False
         else:
             return True
