@@ -11,17 +11,24 @@ from xo_otm_identify import CommandLineArgParser
 from xo_otm_identify import PreProcessor
 from xo_otm_identify import Processor
 from xo_otm_identify import Configuration
+from xo_otm_identify import Validator
 
 
 # In[]
 
+#initiate the argument parsser
 clarg = CommandLineArgParser()
 #clarg.parse_command_line_arguments()
 clarg.set_test_cfg_arg('otm_envisat-ers2_full_cfg.yaml')
-
+#get the arguments
 args = clarg.get_args()
 
+#initiate the configuration module
 cfg = Configuration(args['cfg'])
+
+#initiate validator module and validate configuration input
+validator = Validator(cfg)
+validator.validate()
 
 #check override status
 OVERRIDE_PREPROC = cfg.override
