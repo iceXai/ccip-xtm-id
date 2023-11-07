@@ -4,7 +4,7 @@
 """
 
 # In[]
-import numpy as nop
+import numpy as np
 
 
 # In[]
