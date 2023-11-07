@@ -47,9 +47,8 @@ class PreProcessor:
         #export to shapefiles
         self._export_shp(id_gdf)
             
-    def _compile_shp(self, 
-                 paths: List[str],
-                 files: List[str]) -> Dict[str, gpd.GeoDataFrame]:
+    def _compile_shp(self, path: str, 
+                     files: List[str]) -> Dict[str, gpd.GeoDataFrame]:
         """ Compile suitable data from 'ocean' files with geoinformation """
         #number of files
         N_FILES = len(files)
@@ -60,7 +59,7 @@ class PreProcessor:
             #status
             logger.info(f'Processing: {ncfile} - {ncidx+1} out of {N_FILES}')
             #open file
-            nc = xr.open_dataset(os.path.join(path_to_files,ncfile))
+            nc = xr.open_dataset(os.path.join(path, ncfile))
             #get data
             lat = nc['time_orbit/latitude'].values
             lon = nc['time_orbit/longitude'].values
