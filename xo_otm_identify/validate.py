@@ -6,6 +6,7 @@
 
 # In[]
 
+from .cfg import Configuration
 
 # In[]
 
