@@ -140,13 +140,13 @@ class Configuration(object):
     def path_to_carrier1_l2i(self, year: str, month: str) -> str:
         CARRIER = self.carrier1
         VERSION = self._l2i_version_carrier1
-        DATE = os.join.path(year, month)
+        DATE = os.path.join(year, month)
         return self._path_to_l2i(CARRIER, VERSION, DATE)
     
     def path_to_carrier2_l2i(self, year: str, month: str) -> str:
         CARRIER = self.carrier2
         VERSION = self._l2i_version_carrier2
-        DATE = os.join.path(year, month)
+        DATE = os.path.join(year, month)
         return self._path_to_l2i(CARRIER, VERSION, DATE)
     
     def _path_to_l2i(self, carrier: str, version: str, date: str) -> str:
