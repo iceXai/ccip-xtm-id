@@ -6,6 +6,8 @@
 # In[]
 import numpy as np
 
+from typing import Dict, List
+
 
 # In[]
 
@@ -53,7 +55,7 @@ class Parameters:
         return np.unique([self.pardict['l1p'][key][0] 
                           for key in self.pardict['l1p'].keys()])
     
-    def parameters_by_group(self, group: str) -> List:
+    def parameters_by_group(self, group: str) -> list:
         return [key for key in self.pardict['l1p'].keys() 
                 if self.pardict['l1p'][key][0] == group]
 
