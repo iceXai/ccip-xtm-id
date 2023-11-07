@@ -59,15 +59,24 @@ class PreProcessor:
             #status
             logger.info(f'Processing: {ncfile} - {ncidx+1} out of {N_FILES}')
             #open file
-            nc = xr.open_dataset(os.path.join(path, ncfile))
-            #get data
-            lat = nc['time_orbit/latitude'].values
-            lon = nc['time_orbit/longitude'].values
-            tmp = nc['time_orbit/timestamp'].values
-            sft = nc['surface_type/flag'].values
+            path_to_file = os.path.join(path, ncfile)
+            nc = xr.open_dataset(path_to_file, group = 'time_orbit')
+            #get data from time orbit group
+            lat = nc['latitude'].values
+            lon = nc['longitude'].values
+            tmp = nc['timestamp'].values
+            #close file connection
+            nc.close()
+            nc = xr.open_dataset(path_to_file, group = 'surface_type')
+            #get data from surface type group
+            sft = nc['flag'].values
+            #close file connection
+            nc.close()
             #dist2coast only available for ENVISAT(?)
+            nc = xr.open_dataset(path_to_file, group = 'classifier')
             try:
-                d2c = nc['classifier/dist_coast'].values
+                
+                d2c = nc['dist_coast'].values
             except:
                 d2c_available = False
             else:
