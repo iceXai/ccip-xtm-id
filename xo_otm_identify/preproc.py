@@ -118,7 +118,7 @@ class PreProcessor:
         #status
         logger.info(f'Complete!')
         #status
-        logger.info(f'Converting data into ESAE2-based geopandas gdf...')    
+        logger.info(f'Converting data into EASE2-based geopandas gdf...')    
         #create gpd.gdf and set/change crs
         xo_gdf_dict = {'pts':[],'lin':[]}
         lon = xo_preproc.lon
