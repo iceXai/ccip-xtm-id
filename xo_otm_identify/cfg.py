@@ -26,7 +26,7 @@ class Configuration(object):
         #configure the logger
         self.configure_logger()
         #initiate parameters
-        self.par = Parameters()
+        self.par = Parameters(self.parameter)
             
     """ Logger Setup """
     def configure_logger(self) -> None:
