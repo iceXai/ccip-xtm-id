@@ -85,7 +85,7 @@ class Parameters:
         #set mandatory file source variable/path
         pdict = {}
         #loop over params and add them
-        for par in self.cfg_parameters:
+        for par in self.cfg.parameters:
             l1pdict = self.pardict['l1p']
             if par in l1pdict.keys():
                 pdict[par] = l1pdict[par]
@@ -97,7 +97,7 @@ class Parameters:
         #set mandatory file source variable/path
         pdict = {}
         #loop over params and add them
-        for par in self.cfg_parameters:
+        for par in self.cfg.parameters:
             l2idict = self.pardict['l2i']
             if par in l2idict.keys():
                 pdict[par] = l2idict[par]
