@@ -156,7 +156,7 @@ class Processor:
 
     def _import_l1p(self, path: str, r0: int, r1: int) -> (str, pd.DataFrame):
         #compile product-level specific parameter list
-        parameters = self.cfg.par.l1p_parameters()
+        parameters = self.cfg.par.l1p_parameters
         #retrieve parameters groups for L1p
         l1p_groups = self.cfg.par.l1p_groups
         #create empty DataFrame 
@@ -239,7 +239,7 @@ class Processor:
     def _import_l2i(self, path: str, r0: int, r1: int, 
                     ref: bool) -> pd.DataFrame:
         #compile product-level specific parameter list
-        parameters = self.cfg.par.l2i_parameters()
+        parameters = self.cfg.par.l2i_parameters
         #open file connection
         nc = xr.open_dataset(path)
         #load the data
