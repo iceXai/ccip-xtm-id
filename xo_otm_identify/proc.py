@@ -34,6 +34,8 @@ class Processor:
         self.cfg = cfg
         self.year = year
         self.month = month
+        self.path_carrier1_l1p = cfg.path_to_carrier1_l1p(year, month)
+        self.path_carrier2_l1p = cfg.path_to_carrier2_l1p(year, month)
         self.path_carrier1_l2i = cfg.path_to_carrier1_l2i(year, month)
         self.path_carrier2_l2i = cfg.path_to_carrier2_l2i(year, month)
         self.files_carrier1_l2i = os.listdir(self.path_carrier1_l2i)
@@ -83,9 +85,9 @@ class Processor:
                 continue
             
             #otherwise continue processing with importing L1p data
-            path_to_f1 = os.path.join(self.cfg._input_l1p, f1)
+            path_to_f1 = os.path.join(self.path_carrier1_l1p, f1)
             l1b_c1, c1_df = self._import_l1p(path_to_f1, f1r0, f1r1)
-            path_to_f2 = os.path.join(self.cfg._input_l1p, f2)
+            path_to_f2 = os.path.join(self.path_carrier2_l1p, f2)
             l1b_c2, c2_df = self._import_l1p(path_to_f2, f2r0, f2r1)
             
             #insert xo/otm id
@@ -99,9 +101,9 @@ class Processor:
             f2_l2i = self._identify_l2i_by_l1p(path_to_f2, paths_l2i_c2)
             
             #import L2i data
-            path_to_f1_l2i = os.path.join(self.cfg._input_l2i, f1_l2i)
+            path_to_f1_l2i = os.path.join(self.path_carrier1_l2i, f1_l2i)
             c1_l2i_df = self._import_l2i(path_to_f1_l2i, f1r0, f1r1, True)
-            path_to_f2_l2i = os.path.join(self.cfg._input_l2i, f2_l2i)
+            path_to_f2_l2i = os.path.join(self.path_carrier2_l2i, f2_l2i)
             c2_l2i_df = self._import_l2i(path_to_f2_l2i, f2r0, f2r1, False)
             
             #insert xo/otm id
