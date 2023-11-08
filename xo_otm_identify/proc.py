@@ -49,8 +49,6 @@ class Processor:
         #export to csv
         N_MATCHES = len(csvdict['meta'])
         if N_MATCHES > 0:
-            #status
-            logger.info(f'Output data to CSV...')
             #export data to CSV
             self._export(csvdict)
         else:
