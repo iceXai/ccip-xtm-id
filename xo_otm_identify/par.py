@@ -12,7 +12,7 @@ from typing import Dict, List
 # In[]
 
 class Parameters:
-    def __init__(self):
+    def __init__(self, user_parameters: list):
         #specify supported parameter dictionaries
         l1p_parameters = {'pwr': ['waveform','power'],
                           'rng': ['waveform','range'],
@@ -46,9 +46,8 @@ class Parameters:
         self.pardict = {'l1p': l1p_parameters,
                         'l2i': l2i_parameters
                         }
-        #parameter status flags
-        self.has_l1p_parameters = False
-        self.has_l2i_parameters = False
+        #store user parameters
+        self.usr_par = user_parameters
         
     @property
     def l1p_groups(self) -> np.array:
@@ -85,7 +84,7 @@ class Parameters:
         #set mandatory file source variable/path
         pdict = {}
         #loop over params and add them
-        for par in self.cfg.parameters:
+        for par in self.usr_par:
             l1pdict = self.pardict['l1p']
             if par in l1pdict.keys():
                 pdict[par] = l1pdict[par]
@@ -97,7 +96,7 @@ class Parameters:
         #set mandatory file source variable/path
         pdict = {}
         #loop over params and add them
-        for par in self.cfg.parameters:
+        for par in self.usr_par:
             l2idict = self.pardict['l2i']
             if par in l2idict.keys():
                 pdict[par] = l2idict[par]
