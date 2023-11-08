@@ -89,8 +89,6 @@ class Parameters:
             l1pdict = self.pardict['l1p']
             if par in l1pdict.keys():
                 pdict[par] = l1pdict[par]
-        # #set prouct level flags
-        # self._set_product_flags(cdict)
         #return to caller
         return pdict
     
@@ -103,8 +101,6 @@ class Parameters:
             l2idict = self.pardict['l2i']
             if par in l2idict.keys():
                 pdict[par] = l2idict[par]
-        # #set prouct level flags
-        # self._set_product_flags(cdict)
         #return to caller
         return pdict
 
