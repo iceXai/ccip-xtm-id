@@ -44,7 +44,7 @@ class PreProcessor:
         carrier2_gdfdict = self._compile_shp(self.path_carrier2, 
                                              self.files_carrier2)
         #identify xo's/otm's
-        id_gdf = self.identify(carrier1_gdfdict, carrier2_gdfdict)
+        id_gdf = self._identify(carrier1_gdfdict, carrier2_gdfdict)
         #export to shapefiles
         self._export_shp(id_gdf)
             
@@ -76,7 +76,6 @@ class PreProcessor:
             #dist2coast only available for ENVISAT(?)
             nc = xr.open_dataset(path_to_file, group = 'classifier')
             try:
-                
                 d2c = nc['dist_coast'].values
             except:
                 d2c_available = False
