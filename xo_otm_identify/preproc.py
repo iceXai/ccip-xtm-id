@@ -235,9 +235,9 @@ class PreProcessor:
     
     def _identify_intersection(self, line1, line2) -> None:
         if self.cfg.matchtype == 'xo':
-            return lin1.intersection(lin2)
+            return line1.intersection(line2)
         if self.cfg.matchtype == 'otm':
-            return lin1.intersection(lin2.buffer(self.cfg.buffersize))
+            return line1.intersection(line2.buffer(self.cfg.buffersize))
         
     def _identify_points_in_match(self, line_points) -> None:
         #get the geometrie
