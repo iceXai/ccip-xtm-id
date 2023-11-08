@@ -56,7 +56,7 @@ class PreProcessor:
     
         #compile the pd.df from the raw files
         xo_preproc = []
-        for ncidx, ncfile in enumerate(files):
+        for ncidx, ncfile in enumerate(files[:25]):
             #status
             logger.info(f'Processing: {ncfile} - {ncidx+1} out of {N_FILES}')
             #open file
