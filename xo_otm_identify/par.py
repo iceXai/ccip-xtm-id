@@ -83,6 +83,7 @@ class Parameters:
     def l1p_parameters(self) -> Dict[str, str]:
         #set mandatory file source variable/path
         pdict = {}
+        pdict['src'] = self.pardict['l1p']['src']
         #loop over params and add them
         for par in self.usr_par:
             l1pdict = self.pardict['l1p']
