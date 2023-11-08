@@ -303,8 +303,10 @@ class PreProcessor:
                        line1_points, 
                        line2_points) -> None:
         #identify line points in match intersect
-        line2_points_in_match = self._identify_points_in_match(line1_points)
-        line2_points_in_match = self._identify_points_in_match(line2_points)
+        line1_points_in_match = self._identify_points_in_match(match,
+                                                               line1_points)
+        line2_points_in_match = self._identify_points_in_match(match,
+                                                               line2_points)
         #get the geometrie
         line1_point_geometries = gpd.GeoSeries(line1_points.geometry)
         line2_point_geometries = gpd.GeoSeries(line2_points.geometry)
