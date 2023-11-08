@@ -211,9 +211,9 @@ class PreProcessor:
                                                 points_on_line1, 
                                                 points_on_line2)
                 else:
-                    logger.critical(f'Unsupported intersect type: '+\
-                                    f'{type(MATCH)}!')
-                    sys.exit()
+                    logger.warning(f'Unsupported intersect type: '+\
+                                   f'{type(MATCH)}!')
+                    ATTRS = None
                 if ATTRS is not None:
                     attributes.append(ATTRS)
                     geometries.append(MATCH)
