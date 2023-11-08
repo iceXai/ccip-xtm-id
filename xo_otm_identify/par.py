@@ -51,12 +51,12 @@ class Parameters:
         
     @property
     def l1p_groups(self) -> np.array:
-        return np.unique([self.pardict['l1p'][key][0] 
-                          for key in self.pardict['l1p'].keys()])
+        return np.unique([self.l1p_parameters[key][0] 
+                          for key in self.l1p_parameters.keys()])
     
     def parameters_by_group(self, group: str) -> list:
-        return [key for key in self.pardict['l1p'].keys() 
-                if self.pardict['l1p'][key][0] == group]
+        return [key for key in self.l1p_parameters.keys() 
+                if self.l1p_parameters[key][0] == group]
 
     def validate_cfg_parameters(self, parameters: list) -> bool:
         #store for later use
