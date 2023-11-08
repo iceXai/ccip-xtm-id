@@ -239,7 +239,7 @@ class PreProcessor:
         if self.cfg.matchtype == 'otm':
             return line1.intersection(line2.buffer(self.cfg.buffersize))
         
-    def _identify_points_in_match(self, line_points) -> None:
+    def _identify_points_in_match(self, match, line_points) -> None:
         #get the geometrie
         line_point_geometries = gpd.GeoSeries(line_points.geometry)
         #buffer intersect
@@ -258,8 +258,10 @@ class PreProcessor:
                       line1_points, 
                       line2_points) -> None:
         #identify line points in match intersect
-        line2_points_in_match = self._identify_points_in_match(line1_points)
-        line2_points_in_match = self._identify_points_in_match(line2_points)
+        line1_points_in_match = self._identify_points_in_match(match,
+                                                               line1_points)
+        line2_points_in_match = self._identify_points_in_match(match,
+                                                               line2_points)
         #get the geometrie
         line1_point_geometries = gpd.GeoSeries(line1_points.geometry)
         line2_point_geometries = gpd.GeoSeries(line2_points.geometry)
