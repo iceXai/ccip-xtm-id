@@ -171,7 +171,7 @@ class PreProcessor:
         
         #loop over all sensor 1 orbits to identify crossovers and 
         #orbit-trajectory matches with sensor 2 orbits
-        N_LINES_CARRIER1 = len(lns1)
+        N_LINES_CARRIER1 = len(LINES1)
         for idx1, xo_id1, lin1 in LINES1.itertuples():
             #status
             logger.info(f'Processing {idx1+1} out of {N_LINES_CARRIER1}')
