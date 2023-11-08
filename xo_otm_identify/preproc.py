@@ -6,6 +6,7 @@
 
 # In[]
 
+import sys
 import os
 import shapely
 
@@ -351,6 +352,7 @@ class PreProcessor:
             logger.info(f'Complete.')
         else:
             logger.critical(f'No matches found to export!')
+            sys.exit()
 
 
             
