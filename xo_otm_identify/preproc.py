@@ -56,7 +56,7 @@ class PreProcessor:
     
         #compile the pd.df from the raw files
         xo_preproc = []
-        for ncidx, ncfile in enumerate(files[:25]):
+        for ncidx, ncfile in enumerate(files[:50]):
             #status
             logger.info(f'Processing: {ncfile} - {ncidx+1} out of {N_FILES}')
             #open file
@@ -343,8 +343,14 @@ class PreProcessor:
         #make sure crs is set
         id_gdf = id_gdf.set_crs(epsg=self.cfg.epsg)
         #save
-        OUTNAME = self.cfg.output_to_shp(self.year, self.month)
-        id_gdf.to_file(f'{OUTNAME}')
+        if len(id_gdf) > 0:
+            #status
+            logger.info(f'Exporting data to shapefiles...')
+            OUTNAME = self.cfg.output_to_shp(self.year, self.month)
+            id_gdf.to_file(f'{OUTNAME}')
+            logger.info(f'Complete.')
+        else:
+            logger.critical(f'No matches found to export!')
 
 
             
