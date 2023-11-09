@@ -130,7 +130,7 @@ class Configuration(object):
     def _path_to_l1p(self, carrier: str, version: str, date: str) -> str:
         INPATH = self._input_l1p
         if carrier == 'cryosat2':
-            PRODUCT = 'ipf1-d/rep/l1p'
+            PRODUCT = 'ipf1-e/rep/l1p'
         else:
             PRODUCT = 'l1p'
         HEMISPHERE = self.hemisphere_long
