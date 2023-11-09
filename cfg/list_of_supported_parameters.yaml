@@ -1,32 +1,32 @@
 #List of supported parameters of L1p/L2i data
 #{Abbreviation}: [{In File Group}, {In File Variable}]
 l1p:
-    pwr: ['waveform', 'power']
-    rng: ['waveform', 'range']
-    rdm: ['waveform', 'radar_mode']
-    alt: ['time_orbit', 'altitude']
-    lat: ['time_orbit', 'latitude']
-    lon: ['time_orbit', 'longitude']
-    flg: ['surface_type', 'flag']
-    fmi: ['classifier', 'first_maximum_index']
-    ppk: ['classifier', 'peakiness']
-    lew: ['classifier', 'leading_edge_width']
-    lep: ['classifier', 'leading_edge_peakiness']
-    leq: ['classifier', 'leading_edge_quality']
-    nsp: ['classifier', 'noise_power']
-    sig: ['classifier', 'sigma0']
-    eps: ['classifier', 'epsilon_sec']
-    sku: ['classifier', 'stack_kurtosis']
-    spk: ['classifier', 'stack_peakiness']
-    ssd: ['classifier', 'stack_standard_deviation']
-    ssk: ['classifier', 'stack_skewness']   
+    pwr: [waveform, power]
+    rng: [waveform, range]
+    rdm: [waveform, radar_mode]
+    alt: [time_orbit, altitude]
+    lat: [time_orbit, latitude]
+    lon: [time_orbit, longitude]
+    flg: [surface_type, flag]
+    fmi: [classifier, first_maximum_index]
+    ppk: [classifier, peakiness]
+    lew: [classifier, leading_edge_width]
+    lep: [classifier, leading_edge_peakiness]
+    leq: [classifier, leading_edge_quality]
+    nsp: [classifier, noise_power]
+    sig: [classifier, sigma0]
+    eps: [classifier, epsilon_sec]
+    sku: [classifier, stack_kurtosis]
+    spk: [classifier, stack_peakiness]
+    ssd: [classifier, stack_standard_deviation]
+    ssk: [classifier, stack_skewness]   
 
 l2i:
-    sla: 'sea_level_anomaly'
-    mss: 'mean_sea_surface'
-    elv: 'elevation'
-    elu: 'elevation_uncertainty'
-    pdc: 'pulse_deblurring_correction'
-    d2o: 'distance_to_ocean'
-    d2i: 'distance_to_low_ice_concentration'
-    miz: 'flag_miz  
+    sla: sea_level_anomaly
+    mss: mean_sea_surface
+    elv: elevation
+    elu: elevation_uncertainty
+    pdc: pulse_deblurring_correction
+    d2o: distance_to_ocean
+    d2i: distance_to_low_ice_concentration
+    miz: flag_miz  
