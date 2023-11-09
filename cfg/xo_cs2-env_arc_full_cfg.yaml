@@ -1,0 +1,63 @@
+#Configuration file for the XO/OTM identification processor 
+carrier:
+    #Sepcify carriers to be used
+    reference: cryosat2
+    match: envisat
+
+#Define matchching parameters for
+#- type between crossovers and orbit trajectory matches [xo/otm]
+#- buffer size [in meters; int], and,
+#- time difference [dt in hours; int]
+matching:
+    type: XO
+    buffer: 12500
+    dt: 12
+
+#Specify AOI [arc/ant] for Arctic or Antarctic use
+aoi: arc
+
+#Path to L1p/L2i input data structure as provided/used by pysiral [up to carrier level]
+input: 
+    l1p: /mnt/isibhv/projects/siral/data/altimetry/
+    l2i: /mnt/isibhv/projects/siral/product/altimetry/pysiral/cci/tds/
+
+#Set data versions for l1p/l2i
+version:
+    reference:
+        l1p: v1p1
+        l2i: v3p0-rc2
+    match:
+        l1p: v1p2
+        l2i: v3p0-preview5-mt-v1p2
+
+#Specify output directory (created if needed)
+output: /mnt/isibhv/projects/p_oscd/ccip-p2/xo/tds-p2_cs2-env_xo_v001
+
+#Specify whether the preprocessing should be overriddedn if already available
+override: False
+    
+#Specify dates to be calculated by year/month as single int ot list
+date:
+    month: [11, 12, 01, 02, 03, 04, 10, 11, 12, 01, 02, 03]
+    year: [2010, 2010, 2011, 2011, 2011, 2011, 2011, 2011, 2011, 2012, 2012, 2012]
+    
+#Set parameters to be included in the CSV output
+parameter: 
+    - fmi 
+    - ppk 
+    - leq 
+    - lep 
+    - lew 
+    - sig 
+    - lon 
+    - lat 
+    - pwr 
+    - rng 
+    - eps 
+    - sla 
+    - mss 
+    - alt 
+    - elv 
+    - elu
+    - pdc 
+    - miz     
