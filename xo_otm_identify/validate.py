@@ -42,6 +42,8 @@ class Validator(object):
             return True
     
     def validate_l1p_pathing(self) -> bool:
+        CARRIER1 = self.cfg.carrier1
+        CARRIER2 = self.cfg.carrier2
         INVALID = False
         for yy, mm in zip(self.cfg.yy, self.cfg.mm):
             PATH = self.cfg.path_to_carrier1_l1p(yy, mm)
@@ -60,6 +62,8 @@ class Validator(object):
             return True
         
     def validate_l2i_pathing(self) -> bool:
+        CARRIER1 = self.cfg.carrier1
+        CARRIER2 = self.cfg.carrier2
         INVALID = False
         for yy, mm in zip(self.cfg.yy, self.cfg.mm):
             PATH = self.cfg.path_to_carrier1_l2i(yy, mm)
