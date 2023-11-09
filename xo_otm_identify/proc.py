@@ -50,7 +50,7 @@ class Processor:
         N_MATCHES = len(csvdict['meta'])
         if N_MATCHES > 0:
             #export data to CSV
-            self._export(csvdict)
+            self._export_csv(csvdict)
         else:
             #status
             logger.critical(f'No data found to export!')
@@ -275,7 +275,7 @@ class Processor:
         #return to caller
         return df
         
-    def _export(self, csvdict: Dict[str, pd.DataFrame]) -> None:
+    def _export_csv(self, csvdict: Dict[str, pd.DataFrame]) -> None:
         #status
         logger.info(f'Dumping data to CSV...')
         #subset meta data to index and time difference data
