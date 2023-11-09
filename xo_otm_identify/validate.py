@@ -8,6 +8,8 @@
 
 import os
 
+from loguru import logger
+
 from .cfg import Configuration
 
 # In[]
