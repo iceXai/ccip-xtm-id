@@ -25,41 +25,8 @@ class Parameters:
         path = os.path.join(os.getcwd(), 'cfg', PARFILE)
         with open(path) as f:
             self.par = yaml.safe_load(f)
-        import pdb; pdb.set_trace()    
-        #specify supported parameter dictionaries
-        l1p_parameters = {'pwr': ['waveform','power'],
-                          'rng': ['waveform','range'],
-                          'rdm': ['waveform','radar_mode'],
-                          'alt': ['time_orbit','altitude'],
-                          'lat': ['time_orbit','latitude'],
-                          'lon': ['time_orbit','longitude'],
-                          'flg': ['surface_type','flag'],
-                          'fmi': ['classifier','first_maximum_index'],
-                          'ppk': ['classifier','peakiness'],
-                          'lew': ['classifier','leading_edge_width'],
-                          'lep': ['classifier','leading_edge_peakiness'],
-                          'leq': ['classifier','leading_edge_quality'],
-                          'nsp': ['classifier','noise_power'],
-                          'sig': ['classifier','sigma0'],
-                          'eps': ['classifier','epsilon_sec'],
-                          'sku': ['classifier','stack_kurtosis'],
-                          'spk': ['classifier','stack_peakiness'],
-                          'ssd': ['classifier','stack_standard_deviation'],
-                          'ssk': ['classifier','stack_skewness'],
-                          'src': ['', 'mission_data_source'],
-                          }
-        l2i_parameters = {'sla': 'sea_level_anomaly',
-                          'mss': 'mean_sea_surface',
-                          'elv': 'elevation',
-                          'elu': 'elevation_uncertainty',
-                          'pdc': 'pulse_deblurring_correction',
-                          'd2o': 'distance_to_ocean',
-                          'd2i': 'distance_to_low_ice_concentration',
-                          'miz': 'flag_miz',
-                          }
-        self.pardict = {'l1p': l1p_parameters,
-                        'l2i': l2i_parameters
-                        }
+        #add source to l1p 
+        self.par['l1p']['src'] = ['', 'mission_data_source']
         #store user parameters
         self.usr_par = user_parameters
         
@@ -83,8 +50,8 @@ class Parameters:
             return False
         else:
             for par in parameters: 
-                NOT_L1P = par not in self.pardict['l1p']
-                NOT_L2I = par not in self.pardict['l2i']
+                NOT_L1P = par not in self.par['l1p']
+                NOT_L2I = par not in self.par['l2i']
                 if NOT_L1P and NOT_L2I:
                     #status
                     logger.critical(f'Specified parameter {par} currently '+\
@@ -97,10 +64,10 @@ class Parameters:
     def l1p_parameters(self) -> Dict[str, str]:
         #set mandatory file source variable/path
         pdict = {}
-        pdict['src'] = self.pardict['l1p']['src']
+        pdict['src'] = self.par['l1p']['src']
         #loop over params and add them
         for par in self.usr_par:
-            l1pdict = self.pardict['l1p']
+            l1pdict = self.par['l1p']
             if par in l1pdict.keys():
                 pdict[par] = l1pdict[par]
         #return to caller
@@ -112,7 +79,7 @@ class Parameters:
         pdict = {}
         #loop over params and add them
         for par in self.usr_par:
-            l2idict = self.pardict['l2i']
+            l2idict = self.par['l2i']
             if par in l2idict.keys():
                 pdict[par] = l2idict[par]
         #return to caller
