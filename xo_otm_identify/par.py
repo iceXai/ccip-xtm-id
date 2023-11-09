@@ -13,6 +13,14 @@ from typing import Dict, List
 
 class Parameters:
     def __init__(self, user_parameters: list):
+        #status
+        logger.info('Load supported parameters...')
+        #loads the yaml file and reads it content
+        PARFILE = 'list_of_supported_parameters.yaml'
+        path = os.path.join(os.getcwd(), 'cfg', PARFILE)
+        with open(path) as f:
+            self.par = yaml.safe_load(f)
+        import pdb; pdb.set_trace()    
         #specify supported parameter dictionaries
         l1p_parameters = {'pwr': ['waveform','power'],
                           'rng': ['waveform','range'],

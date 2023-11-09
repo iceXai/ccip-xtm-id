@@ -26,7 +26,7 @@ class Configuration(object):
         #configure the logger
         self.configure_logger()
         #initiate parameters
-        self.par = Parameters(self.parameter)
+        self.par = Parameters(self.user_parameter)
             
     """ Logger Setup """
     def configure_logger(self) -> None:
@@ -57,7 +57,7 @@ class Configuration(object):
         return self.config['aoi'].lower()
     
     @property
-    def parameter(self):
+    def user_parameter(self):
         return self.config['parameter'] 
 
     @property
