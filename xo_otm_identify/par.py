@@ -38,6 +38,7 @@ class Parameters:
         l2i_parameters = {'sla': 'sea_level_anomaly',
                           'mss': 'mean_sea_surface',
                           'elv': 'elevation',
+                          'elu': 'elevation_uncertainty',
                           'pdc': 'pulse_deblurring_correction',
                           'd2o': 'distance_to_ocean',
                           'd2i': 'distance_to_low_ice_concentration',
