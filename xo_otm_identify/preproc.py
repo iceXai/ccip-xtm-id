@@ -241,7 +241,7 @@ class PreProcessor:
             return line1.intersection(line2.buffer(self.cfg.buffersize))
         
     def _identify_points_in_match(self, match, line_points) -> None:
-        #get the geometrie
+        #get the geometries
         line_point_geometries = gpd.GeoSeries(line_points.geometry)
         #buffer intersect
         match_buffered = match.buffer(self.cfg.buffersize)
@@ -263,9 +263,6 @@ class PreProcessor:
                                                                line1_points)
         line2_points_in_match = self._identify_points_in_match(match,
                                                                line2_points)
-        #get the geometrie
-        line1_point_geometries = gpd.GeoSeries(line1_points.geometry)
-        line2_point_geometries = gpd.GeoSeries(line2_points.geometry)
                 
         #check whether points exist in buffer
         if len(line1_points_in_match)>0 and len(line2_points_in_match)>0:
@@ -273,6 +270,16 @@ class PreProcessor:
             #get correct indices in files
             fidx1 = line1_points['fidx'].iloc[line1_points_in_match]
             fidx2 = line2_points['fidx'].iloc[line2_points_in_match]
+            
+            #TODO
+            #calculated but unsued/unreturned
+            #calculate distance to XO for each point
+            geometry1 = line1_points['geometry']
+            line1_match_geometries = geometry1.iloc[line1_points_in_match]
+            geometry2 = line1_points['geometry']
+            line2_match_geometries = geometry2.iloc[line2_points_in_match]
+            dist2xo1 = np.round(line1_match_geometries.distance(match),0)
+            dist2xo2 = np.round(line2_match_geometries.distance(match),0)
             
             #get time of all points in the match intersect
             dt_idx1 = int(len(line1_points_in_match)/2)
@@ -309,9 +316,6 @@ class PreProcessor:
                                                                line1_points)
         line2_points_in_match = self._identify_points_in_match(match,
                                                                line2_points)
-        #get the geometrie
-        line1_point_geometries = gpd.GeoSeries(line1_points.geometry)
-        line2_point_geometries = gpd.GeoSeries(line2_points.geometry)
     
         #check whether enough points exist in buffer
         if len(line1_points_in_match)>50 and len(line2_points_in_match)>50:
