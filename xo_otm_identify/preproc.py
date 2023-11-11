@@ -202,8 +202,8 @@ class PreProcessor:
                 if type(MATCH) is shapely.geometry.point.Point \
                     and self.cfg.matchtype == 'xo':
                     ATTRS = self._identify_XOs(MATCH, 
-                                                points_on_line1, 
-                                                points_on_line2)                           
+                                               points_on_line1, 
+                                               points_on_line2)                           
                 #identify OTMs
                 elif type(MATCH) is shapely.geometry.linestring.LineString \
                     and self.cfg.matchtype == 'otm':
@@ -266,7 +266,6 @@ class PreProcessor:
                 
         #check whether points exist in buffer
         if len(line1_points_in_match)>0 and len(line2_points_in_match)>0:
-            import pdb; pdb.set_trace()
             #get correct indices in files
             fidx1 = line1_points['fidx'].iloc[line1_points_in_match]
             fidx2 = line2_points['fidx'].iloc[line2_points_in_match]
