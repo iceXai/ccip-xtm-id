@@ -269,7 +269,7 @@ class Processor:
                            for th in ths]
             frb_df = pd.DataFrame(frb, columns = frb_columns)
             #prepend multi-threshold freeboard data
-            par_df = pd.concat([frb_df, df],axis=1)
+            df = pd.concat([frb_df, df],axis=1)
         #close file connection
         nc.close()
         #return to caller
