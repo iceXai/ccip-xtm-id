@@ -65,7 +65,7 @@ class Configuration(object):
             return 'cs2'
         if carrier == 'envisat':
             return 'env'
-        if carrier == 'ers2' | carrier == 'ers1':
+        if carrier == 'ers2' or carrier == 'ers1':
             return carrier
     
     @property
