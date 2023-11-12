@@ -220,13 +220,16 @@ class PreProcessor:
                     
         #store data into a GeoDataFrame
         logger.info(f'Saving results to GeoDataFrame...')
-        COLUMNS = [self.cfg.matchtype+'_f1',
-                   self.cfg.matchtype+'_f2',
-                   'f1_rng_0',
-                   'f1_rng_1',
-                   'f2_rng_0',
-                   'f2_rng_1',
-                   'dt_'+self.cfg.matchtype,
+        MATCH = self.cfg.matchtype
+        CARRIER_TAG1 = self.cfg.carrier1_tag
+        CARRIER_TAG2 = self.cfg.carrier2_tag
+        COLUMNS = [f'{MATCH}_{CARRIER_TAG1}',
+                   f'{MATCH}_{CARRIER_TAG2}',
+                   f'{CARRIER_TAG1}_rng_0',
+                   f'{CARRIER_TAG1}_rng_1',
+                   f'{CARRIER_TAG2}_rng_0',
+                   f'{CARRIER_TAG2}_rng_1',
+                   f'dt_{MATCH}',
                    ]
         return gpd.GeoDataFrame(attributes,
                                 geometry = geometries,
