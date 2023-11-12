@@ -60,7 +60,7 @@ class Configuration(object):
     def carrier2_tag(self):
         return self.carrier_tag(self.carrier2)
     
-    def carrier_tag(carrier: str) -> str:
+    def carrier_tag(self, carrier: str) -> str:
         if carrier == 'cryosat2':
             return 'cs2'
         if carrier == 'envisat':
