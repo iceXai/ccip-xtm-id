@@ -53,6 +53,22 @@ class Configuration(object):
         return self.config['carrier']['match'].lower()
     
     @property
+    def carrier1_tag(self):
+        return self.carrier_tag(self.carrier1)
+    
+    @property
+    def carrier2_tag(self):
+        return self.carrier_tag(self.carrier2)
+    
+    def carrier_tag(carrier: str) -> str:
+        if carrier == 'cryosat2':
+            return 'cs2'
+        if carrier == 'envisat':
+            return 'env'
+        if carrier == 'ers2' | carrier == 'ers1':
+            return carrier
+    
+    @property
     def aoi(self):
         return self.config['aoi'].lower()
     

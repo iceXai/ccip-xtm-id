@@ -121,13 +121,15 @@ class Processor:
                                              ignore_index=True)
             
             #create meta data entries
+            CARRIER_TAG1 = self.cfg.carrier1_tag
+            CARRIER_TAG2 = self.cfg.carrier2_tag
             meta = {self.cfg.matchtype + '_idx': idx,
-                    'l1p'+self.cfg.carrier1: f1,
-                    'l1p'+self.cfg.carrier2: f2,
-                    'l1b'+self.cfg.carrier1: l1b_c1,
-                    'l1b'+self.cfg.carrier2: l1b_c2,
-                    'l2i'+self.cfg.carrier1: f1_l2i,
-                    'l2i'+self.cfg.carrier2: f2_l2i,
+                    f'l1p_{CARRIER_TAG1}': f1,
+                    f'l1p_{CARRIER_TAG2}': f2,
+                    f'l1b_{CARRIER_TAG1}': l1b_c1,
+                    f'l1b_{CARRIER_TAG2}': l1b_c2,
+                    f'l2i_{CARRIER_TAG1}': f1_l2i,
+                    f'l2i_{CARRIER_TAG2}': f2_l2i,
                     self.cfg.matchtype + '_dt': dt,
                     }
             
