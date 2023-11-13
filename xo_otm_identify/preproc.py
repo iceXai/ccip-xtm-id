@@ -223,13 +223,13 @@ class PreProcessor:
         MATCH = self.cfg.matchtype
         CARRIER_TAG1 = self.cfg.carrier1_tag
         CARRIER_TAG2 = self.cfg.carrier2_tag
-        COLUMNS = [f'{MATCH}_{CARRIER_TAG1}',
-                   f'{MATCH}_{CARRIER_TAG2}',
+        COLUMNS = [f'l1p_{CARRIER_TAG1}',
+                   f'l1p_{CARRIER_TAG2}',
                    f'{CARRIER_TAG1}_rng_0',
                    f'{CARRIER_TAG1}_rng_1',
                    f'{CARRIER_TAG2}_rng_0',
                    f'{CARRIER_TAG2}_rng_1',
-                   f'dt_{MATCH}',
+                   f'{MATCH}_dt',
                    ]
         return gpd.GeoDataFrame(attributes,
                                 geometry = geometries,
