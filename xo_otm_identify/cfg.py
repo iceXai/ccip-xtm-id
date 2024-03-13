@@ -12,21 +12,24 @@ from .par import Parameters
 import yaml
 import os
 import sys
+import shutil
 
 # In[]
 
 class Configuration(object):
     def __init__(self, cfg_file_name: str):
+        #configure the logger
+        self.configure_logger()
         #status
         logger.info('Load configuration file...')
         #loads the yaml file and reads it content
         path = os.path.join(os.getcwd(), 'cfg', cfg_file_name)
         with open(path) as f:
             self.config = yaml.safe_load(f)
-        #configure the logger
-        self.configure_logger()
         #initiate parameters
         self.par = Parameters(self.user_parameter)
+        #store configuration file for later reference
+        self._copy_cfg_file(cfg_file_name)
             
     """ Logger Setup """
     def configure_logger(self) -> None:
@@ -173,6 +176,15 @@ class Configuration(object):
                             HEMISPHERE, PRODUCT, date)
         
     """ Output files """
+    def _copy_cfg_file(self, cfg_file: str) -> None:
+        INPATH = os.path.join(os.getcwd(), 'cfg', cfg_file)
+        OUTPATH = self._output_path
+        ARCHIVE = 'archive'
+        DESTPATH = os.path.join(OUTPATH, ARCHIVE)
+        if not os.path.isdir(DESTPATH):
+            os.makedirs(DESTPATH)
+        shutil.copy(INPATH, DESTPATH)
+    
     def _output_shp_name(self, year: str, month: str) -> str:
         MATCHTYPE = self.matchtype
         CARRIER1 = self.carrier1
