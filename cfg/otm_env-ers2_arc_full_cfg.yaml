@@ -28,10 +28,10 @@ version:
         l2i: v3p0-rc2
     match:
         l1p: v1p3
-        l2i: v4p0-mt-refv1p3-001
+        l2i: v4p0-mt-refv1p3-002
 
 #Specify output directory (created if needed)
-output: /isibhv/projects/p_oscd/ccip-p2/otm/tds-p2_env-ers2_otm_v002
+output: /isibhv/projects/p_oscd/ccip-p2/otm/tds-p2_env-ers2_otm_v003
 
 #Specify whether the preprocessing should be overriddedn if already available
 override: False
