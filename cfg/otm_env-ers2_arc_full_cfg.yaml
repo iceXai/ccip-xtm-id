@@ -34,7 +34,7 @@ version:
 output: /isibhv/projects/p_oscd/ccip-p2/otm/tds-p2_env-ers2_otm_v006
 
 #Specify whether the preprocessing should be overriddedn if already available
-override: False
+override: True
     
 #Specify dates to be calculated by year/month as single int ot list
 date:
