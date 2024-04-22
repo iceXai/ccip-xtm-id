@@ -60,4 +60,6 @@ parameter:
     - elv 
     - elu
     - pdc 
-    - miz     
+    - miz  
+    - asf
+    - vld
