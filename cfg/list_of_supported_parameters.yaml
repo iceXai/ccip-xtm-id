@@ -4,6 +4,7 @@ l1p:
     pwr: [waveform, power]
     rng: [waveform, range]
     rdm: [waveform, radar_mode]
+    vld: [waveform, is_valid]
     alt: [time_orbit, altitude]
     lat: [time_orbit, latitude]
     lon: [time_orbit, longitude]
@@ -19,7 +20,8 @@ l1p:
     sku: [classifier, stack_kurtosis]
     spk: [classifier, stack_peakiness]
     ssd: [classifier, stack_standard_deviation]
-    ssk: [classifier, stack_skewness]   
+    ssk: [classifier, stack_skewness]
+    asf: [classifier, alt_state_flag]
 
 l2i:
     sla: sea_level_anomaly
