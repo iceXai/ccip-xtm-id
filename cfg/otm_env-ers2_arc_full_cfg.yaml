@@ -28,7 +28,7 @@ version:
         l2i: v3p0-rc2
     match:
         l1p: v1p4
-        l2i: v4p0-mt-refv1p4-006
+        l2i: v4p0-mt-refv1p4-001
 
 #Specify output directory (created if needed)
 output: /isibhv/projects/p_oscd/ccip-p2/otm/tds-p2_env-ers2_otm_v007
