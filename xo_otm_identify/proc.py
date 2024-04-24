@@ -248,6 +248,7 @@ class Processor:
         DATA = {}
         #load common parameters
         DATA['sft'] = nc['surface_type'].values[r0:r1]
+        DATA['frb'] = nc['sea_ice_freeboard'].values[r0:r1]
         for par in parameters:
             #get in-file variable name
             VAR = parameters[par]
@@ -257,9 +258,9 @@ class Processor:
             except KeyError:
                 logger.warning(f'Parameter {VAR} not found in L2i file')
                 continue    
-        if ref:
-            #load reference sensor specific things
-            DATA['frb'] = nc['sea_ice_freeboard'].values[r0:r1]
+        #if ref:
+        #    #load reference sensor specific things
+        #    DATA['frb'] = nc['sea_ice_freeboard'].values[r0:r1]
         #convert it to DataFrame
         df = pd.DataFrame(DATA)
         if not ref:
