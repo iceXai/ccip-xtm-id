@@ -22,6 +22,8 @@ l1p:
     ssd: [classifier, stack_standard_deviation]
     ssk: [classifier, stack_skewness]
     asf: [classifier, alt_state_flag]
+    ltp: [classifier, late_tail_to_peak_power]
+    tes: [classifier, trailing_edge_slope]
 
 l2i:
     sla: sea_level_anomaly
